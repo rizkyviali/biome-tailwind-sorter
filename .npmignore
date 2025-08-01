@@ -1,0 +1,41 @@
+# Source files
+src/
+examples/
+__tests__/
+*.test.ts
+
+# Development files
+.gitignore
+tsconfig.json
+jest.config.js
+*.md
+!README.md
+
+# Dependencies and build artifacts
+node_modules/
+coverage/
+.nyc_output
+
+# Editor files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Temporary files
+tmp/
+temp/
+
+# Environment files
+.env
+.env.local
+.env.production

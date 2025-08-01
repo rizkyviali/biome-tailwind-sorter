@@ -1,0 +1,56 @@
+{
+  "name": "biome-tailwind-sorter",
+  "version": "1.1.0",
+  "description": "A Biome plugin and formatter for sorting Tailwind CSS classes according to official order",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "biome-tailwind-sorter": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "jest",
+    "prepublishOnly": "npm run build",
+    "format": "node dist/cli.js --write"
+  },
+  "keywords": [
+    "biome",
+    "plugin",
+    "tailwind",
+    "css",
+    "formatter",
+    "linter",
+    "class-sorting",
+    "auto-format",
+    "format-on-save"
+  ],
+  "author": "Rizky Viali",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rizkyviali/biome-tailwind-sorter.git"
+  },
+  "bugs": {
+    "url": "https://github.com/rizkyviali/biome-tailwind-sorter/issues"
+  },
+  "homepage": "https://github.com/rizkyviali/biome-tailwind-sorter#readme",
+  "devDependencies": {
+    "@types/jest": "^29.0.0",
+    "@types/node": "^20.0.0",
+    "jest": "^29.0.0",
+    "ts-jest": "^29.4.0",
+    "typescript": "^5.0.0"
+  },
+  "peerDependencies": {
+    "@biomejs/biome": "^2.0.0"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
