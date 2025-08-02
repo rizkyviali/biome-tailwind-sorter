@@ -1,18 +1,18 @@
 {
   "name": "biome-tailwind-sorter",
-  "version": "1.1.0",
+  "version": "0.2.1",
   "description": "A Biome plugin and formatter for sorting Tailwind CSS classes according to official order",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
-    "biome-tailwind-sorter": "dist/cli.js"
+    "biome-tailwind-sorter": "target/release/biome-tailwind-sorter"
   },
   "scripts": {
-    "build": "tsc",
-    "dev": "tsc --watch",
-    "test": "jest",
+    "build": "cargo build --release",
+    "dev": "cargo build",
+    "test": "cargo test",
     "prepublishOnly": "npm run build",
-    "format": "node dist/cli.js --write"
+    "format": "cargo run -- --write"
   },
   "keywords": [
     "biome",
@@ -46,9 +46,11 @@
     "@biomejs/biome": "^2.0.0"
   },
   "files": [
-    "dist",
+    "target/release/biome-tailwind-sorter",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "Cargo.toml",
+    "src"
   ],
   "engines": {
     "node": ">=16.0.0"
