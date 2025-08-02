@@ -1,4 +1,5 @@
 use regex::Regex;
+use std::sync::LazyLock;
 
 #[derive(Debug, Clone)]
 pub struct ClassAttribute {
@@ -89,21 +90,7 @@ pub fn parse_class_attribute(attribute_value: &str, attribute_name: &str) -> Opt
     })
 }
 
-pub fn is_tailwind_class(class_name: &str) -> bool {
-    // Check if it's a known exact Tailwind class first
-    let exact_tailwind_classes = [
-        "container", "flex", "grid", "block", "inline", "hidden", "visible", "invisible",
-        "absolute", "relative", "fixed", "static", "sticky"
-    ];
-    
-    // Remove modifiers to get base class
-    let base_class = class_name.split(':').last().unwrap_or("");
-    
-    if exact_tailwind_classes.contains(&base_class) {
-        return true;
-    }
-    
-    // Basic heuristics for Tailwind classes using regex
+static TAILWIND_REGEX_PATTERNS: LazyLock<Vec<Regex>> = LazyLock::new(|| {
     let patterns = [
         r"^(p|px|py|pt|pr|pb|pl)-",
         r"^m-\d+",
@@ -122,9 +109,27 @@ pub fn is_tailwind_class(class_name: &str) -> bool {
         r"^items-",
     ];
     
-    patterns.iter().any(|pattern| {
-        Regex::new(pattern).unwrap().is_match(class_name)
-    })
+    patterns.iter()
+        .map(|pattern| Regex::new(pattern).unwrap())
+        .collect()
+});
+
+pub fn is_tailwind_class(class_name: &str) -> bool {
+    // Check if it's a known exact Tailwind class first
+    let exact_tailwind_classes = [
+        "container", "flex", "grid", "block", "inline", "hidden", "visible", "invisible",
+        "absolute", "relative", "fixed", "static", "sticky"
+    ];
+    
+    // Remove modifiers to get base class
+    let base_class = class_name.split(':').last().unwrap_or("");
+    
+    if exact_tailwind_classes.contains(&base_class) {
+        return true;
+    }
+    
+    // Use pre-compiled regex patterns
+    TAILWIND_REGEX_PATTERNS.iter().any(|regex| regex.is_match(class_name))
 }
 
 pub fn filter_tailwind_classes(class_names: &[String]) -> Vec<String> {

@@ -40,37 +40,54 @@ impl TailwindFormatter {
     }
 
     pub fn format_document(&self, source: &str, cursor_pos: Option<CursorPosition>) -> FormatResult {
-        let class_regex = Regex::new(r"(class(?:Name)?=)([\"']?)([^\"']*?)(\2)").unwrap();
+        let double_quote_regex = Regex::new(r#"(class(?:Name)?=")([^"]*?)""#).unwrap();
+        let single_quote_regex = Regex::new(r#"(class(?:Name)?=')([^']*?)'"#).unwrap();
         let mut result = source.to_string();
         let mut offset_adjustment = 0i32;
         let mut changed = false;
         let mut new_cursor_pos = cursor_pos.clone();
 
         // Find all class matches and collect them
-        let matches: Vec<ClassMatch> = class_regex
-            .find_iter(source)
-            .filter_map(|m| {
-                let full_match = m.as_str();
-                if let Some(captures) = class_regex.captures(full_match) {
-                    let prefix = captures.get(1).unwrap().as_str();
-                    let quote = captures.get(2).unwrap().as_str();
-                    let classes = captures.get(3).unwrap().as_str();
-                    let suffix = captures.get(4).unwrap().as_str();
+        let mut matches: Vec<ClassMatch> = Vec::new();
+        
+        // Find double-quoted class attributes
+        for m in double_quote_regex.find_iter(source) {
+            if let Some(captures) = double_quote_regex.captures(m.as_str()) {
+                let prefix = captures.get(1).unwrap().as_str();
+                let classes = captures.get(2).unwrap().as_str();
 
-                    Some(ClassMatch {
-                        start: m.start(),
-                        end: m.end(),
-                        prefix: format!("{}{}", prefix, quote),
-                        classes: classes.to_string(),
-                        suffix: suffix.to_string(),
-                        line_start: self.get_line_from_offset(source, m.start()),
-                        line_end: self.get_line_from_offset(source, m.end()),
-                    })
-                } else {
-                    None
-                }
-            })
-            .collect();
+                matches.push(ClassMatch {
+                    start: m.start(),
+                    end: m.end(),
+                    prefix: prefix.to_string(),
+                    classes: classes.to_string(),
+                    suffix: "\"".to_string(),
+                    line_start: self.get_line_from_offset(source, m.start()),
+                    line_end: self.get_line_from_offset(source, m.end()),
+                });
+            }
+        }
+        
+        // Find single-quoted class attributes
+        for m in single_quote_regex.find_iter(source) {
+            if let Some(captures) = single_quote_regex.captures(m.as_str()) {
+                let prefix = captures.get(1).unwrap().as_str();
+                let classes = captures.get(2).unwrap().as_str();
+
+                matches.push(ClassMatch {
+                    start: m.start(),
+                    end: m.end(),
+                    prefix: prefix.to_string(),
+                    classes: classes.to_string(),
+                    suffix: "'".to_string(),
+                    line_start: self.get_line_from_offset(source, m.start()),
+                    line_end: self.get_line_from_offset(source, m.end()),
+                });
+            }
+        }
+        
+        // Sort matches by start position
+        matches.sort_by(|a, b| a.start.cmp(&b.start));
 
         // Process matches in reverse order to maintain correct offsets
         for class_match in matches.into_iter().rev() {

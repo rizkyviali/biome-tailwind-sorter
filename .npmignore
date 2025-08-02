@@ -1,41 +1,32 @@
-# Source files
-src/
-examples/
-__tests__/
-*.test.ts
-
 # Development files
+.git/
 .gitignore
-tsconfig.json
-jest.config.js
-*.md
-!README.md
-
-# Dependencies and build artifacts
-node_modules/
-coverage/
-.nyc_output
-
-# Editor files
 .vscode/
 .idea/
+
+# Rust development files
+target/debug/
+src/
+Cargo.lock
+*.rs
+
+# Node.js development files  
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
 # OS files
 .DS_Store
 Thumbs.db
 
-# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+# Test files
+test.html
+examples/
 
-# Temporary files
-tmp/
-temp/
+# Only include the release binary
+!target/release/biome-tailwind-sorter
 
-# Environment files
-.env
-.env.local
-.env.production
+#claude
+.claude
+CLAUDE.md

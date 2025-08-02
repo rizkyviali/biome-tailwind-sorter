@@ -1,0 +1,1 @@
+/home/rizkyviali/biome-tailwind-sorter/target/release/libbiome_tailwind_sorter.rlib: /home/rizkyviali/biome-tailwind-sorter/src/class_extractor.rs /home/rizkyviali/biome-tailwind-sorter/src/formatter.rs /home/rizkyviali/biome-tailwind-sorter/src/lib.rs /home/rizkyviali/biome-tailwind-sorter/src/tailwind_order.rs
