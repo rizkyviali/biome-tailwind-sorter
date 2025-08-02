@@ -168,17 +168,18 @@ Responsive modifiers (`sm:`, `md:`, `lg:`, etc.) and state modifiers (`hover:`, 
 ## ⚙️ CLI Options
 
 ```bash
-npx biome-tailwind-sorter [options] <files...>
+biome-tailwind-sorter [options] <files...>
 
 Options:
-  --write, -w               Write sorted classes back to files
-  --check, -c               Check if files need sorting (exit code 1 if changes needed)
-  --verbose, -v             Verbose output
-  --preserve-cursor         Enable cursor position preservation (for editor integration)
-  --cursor-line <LINE>      Current cursor line (0-based)
-  --cursor-column <COLUMN>  Current cursor column (0-based)  
-  --cursor-offset <OFFSET>  Current cursor offset
-  --help, -h                Show help message
+  -w, --write                   Write sorted classes back to files
+  -c, --check                   Check if files need sorting (exit code 1 if changes needed)
+  -v, --verbose                 Verbose output
+      --preserve-cursor         Preserve cursor position (for editor integration)
+      --cursor-line <LINE>      Current cursor line (0-based)
+      --cursor-column <COLUMN>  Current cursor column (0-based)
+      --cursor-offset <OFFSET>  Current cursor offset
+  -h, --help                    Print help
+  -V, --version                 Print version
 ```
 
 ## 🔧 Advanced Usage
@@ -188,20 +189,16 @@ Options:
 You can use the Rust library programmatically in other Rust projects:
 
 ```rust
-use biome_tailwind_sorter::{sort_tailwind_classes, are_classes_sorted, format_document};
+use biome_tailwind_sorter::{sort_tailwind_classes, format_file_content};
 
 // Sort classes
 let classes = vec!["text-white".to_string(), "bg-red-500".to_string(), "p-4".to_string()];
 let sorted = sort_tailwind_classes(&classes);
 println!("{:?}", sorted); // ["p-4", "bg-red-500", "text-white"]
 
-// Check if already sorted
-let is_sorted = are_classes_sorted(&["p-4".to_string(), "bg-red-500".to_string()]);
-println!("{}", is_sorted); // true
-
-// Format entire document
+// Format file content
 let html = r#"<div class="text-red-500 p-4 flex">content</div>"#;
-let formatted = format_document(html);
+let (formatted, _) = format_file_content(html, None);
 println!("{}", formatted);
 ```
 
@@ -221,7 +218,9 @@ The plugin automatically detects standard Tailwind classes. For custom utilities
 **Real-world impact:**
 - Large codebases format in milliseconds instead of seconds
 - No noticeable delay during save operations
-- Cursor position updates are instantaneous
+- Comprehensive test coverage with 19 passing tests
+
+**Note:** The tool is currently optimized for HTML class attributes and may have parsing limitations with complex JSX/TSX syntax. For production use with React components, thorough testing is recommended.
 
 ## 🆚 Comparison with Prettier Plugin
 
