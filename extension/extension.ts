@@ -65,21 +65,41 @@ async function formatDocument(document: vscode.TextDocument) {
     const cursorOffset = document.offsetAt(cursorPosition);
 
     try {
-        // Call the Rust binary with cursor preservation
-        const result = await runFormatter(document.uri.fsPath, cursorOffset);
+        // Get original content
+        const originalContent = document.getText();
+        
+        // Call the Rust binary with cursor preservation - but don't write to file yet
+        const result = await runFormatterInMemory(originalContent, cursorOffset);
         
         if (result.changed) {
-            // Apply the formatted content
+            // Apply the formatted content using VS Code edit
             const edit = new vscode.WorkspaceEdit();
             const fullRange = new vscode.Range(
                 document.positionAt(0),
                 document.positionAt(document.getText().length)
             );
             edit.replace(document.uri, fullRange, result.content);
-            await vscode.workspace.applyEdit(edit);
-
-            // Restore cursor position if available
-            if (result.newCursorOffset !== undefined) {
+            
+            // Apply edit and wait for completion
+            const success = await vscode.workspace.applyEdit(edit);
+            
+            if (success && result.newCursorOffset !== undefined) {
+                // Wait for document to be fully updated
+                await new Promise(resolve => {
+                    const disposable = vscode.workspace.onDidChangeTextDocument(event => {
+                        if (event.document === document) {
+                            disposable.dispose();
+                            resolve(undefined);
+                        }
+                    });
+                    // Fallback timeout in case the event doesn't fire
+                    setTimeout(() => {
+                        disposable.dispose();
+                        resolve(undefined);
+                    }, 100);
+                });
+                
+                // Now set cursor position
                 const newPosition = document.positionAt(result.newCursorOffset);
                 editor.selection = new vscode.Selection(newPosition, newPosition);
                 editor.revealRange(new vscode.Range(newPosition, newPosition));
@@ -112,6 +132,41 @@ interface FormatResult {
     content: string;
     changed: boolean;
     newCursorOffset?: number;
+}
+
+function runFormatterInMemory(content: string, cursorOffset?: number): Promise<FormatResult> {
+    return new Promise((resolve, reject) => {
+        // We'll create a temp file, format it, then read the result
+        const fs = require('fs');
+        const os = require('os');
+        const tmpPath = require('path').join(os.tmpdir(), `biome-tailwind-sorter-${Date.now()}.html`);
+        
+        try {
+            // Write content to temp file
+            fs.writeFileSync(tmpPath, content);
+            
+            // Now run the formatter on the temp file
+            runFormatter(tmpPath, cursorOffset).then(result => {
+                // Clean up temp file
+                try {
+                    fs.unlinkSync(tmpPath);
+                } catch (e) {
+                    // Ignore cleanup errors
+                }
+                resolve(result);
+            }).catch(error => {
+                // Clean up temp file on error
+                try {
+                    fs.unlinkSync(tmpPath);
+                } catch (e) {
+                    // Ignore cleanup errors
+                }
+                reject(error);
+            });
+        } catch (error) {
+            reject(`Failed to create temporary file: ${error}`);
+        }
+    });
 }
 
 function runFormatter(filePath: string, cursorOffset?: number): Promise<FormatResult> {
@@ -171,16 +226,34 @@ function runFormatter(filePath: string, cursorOffset?: number): Promise<FormatRe
                         newCursorOffset = parseInt(cursorMatch[1], 10);
                     }
 
+                    // For temp files, we assume changes happened if the formatter ran successfully
+                    const actuallyChanged = true;
+
                     resolve({
                         content,
-                        changed: true, // Assume changed if formatter ran successfully
+                        changed: actuallyChanged,
                         newCursorOffset
                     });
                 } catch (error) {
                     reject(`Failed to read formatted file: ${error}`);
                 }
             } else {
-                reject(`Formatter exited with code ${code}: ${stderr}`);
+                // If exit code is 1, it might mean no changes were needed
+                if (code === 1) {
+                    try {
+                        const fs = require('fs');
+                        const content = fs.readFileSync(filePath, 'utf8');
+                        resolve({
+                            content,
+                            changed: false,
+                            newCursorOffset: cursorOffset // Keep original cursor position
+                        });
+                    } catch (error) {
+                        reject(`Failed to read file: ${error}`);
+                    }
+                } else {
+                    reject(`Formatter exited with code ${code}: ${stderr}`);
+                }
             }
         });
 
