@@ -37,35 +37,9 @@ npx biome-tailwind-sorter --check src/
 npx biome-tailwind-sorter --write --preserve-cursor --cursor-offset 245 src/component.tsx
 ```
 
-### Method 2: VS Code Extension (Recommended for VS Code users)
+### Method 2: VS Code Integration with Run on Save
 
-**The ultimate solution with perfect cursor preservation!**
-
-This package now includes a built-in VS Code extension that provides seamless integration with full cursor position preservation.
-
-#### Installation and Setup:
-
-1. Install this package: `npm install --save-dev biome-tailwind-sorter`
-2. The VS Code extension will be automatically available
-3. Open VS Code settings and configure:
-
-```json
-{
-  "biome-tailwind-sorter.formatOnSave": true,
-  "biome-tailwind-sorter.preserveCursor": true
-}
-```
-
-#### Features:
-- ✅ **Perfect Cursor Preservation** - Your cursor stays exactly where you expect it
-- ✅ **Format on Save** - Automatically formats when you save files
-- ✅ **Manual Formatting** - Use the command palette: "Format Tailwind Classes"
-- ✅ **Toggle Format on Save** - Use command palette: "Toggle Format on Save"
-- ✅ **Multi-language Support** - Works with JS, TS, JSX, TSX, HTML, and Vue files
-
-### Method 3: VS Code Integration with Run on Save (Alternative)
-
-If you prefer using the Run on Save extension:
+For seamless VS Code integration:
 
 1. Install the [Run on Save](https://marketplace.visualstudio.com/items?itemName=emeraldwalk.RunOnSave) extension
 
@@ -84,9 +58,7 @@ If you prefer using the Run on Save extension:
 }
 ```
 
-**Note:** The built-in VS Code extension (Method 2) provides better cursor preservation than this approach.
-
-### Method 4: Direct Cargo Usage (Advanced)
+### Method 3: Direct Cargo Usage (Advanced)
 
 If you have Rust installed, you can use Cargo directly for maximum performance:
 
@@ -105,16 +77,10 @@ This project **completely solves the cursor jumping problem** that occurs with f
 ### The Problem (Now Solved!)
 When using external formatters, VS Code typically loses track of cursor position because the file content changes during formatting, causing the cursor to jump to unexpected locations.
 
-### Our Complete Solution
-We provide **two solutions** to handle cursor preservation:
+### Our Solution
+The CLI tool provides cursor preservation through:
 
-#### 1. Built-in VS Code Extension (Recommended)
-- **Full Integration**: Native VS Code extension with perfect cursor preservation
-- **Automatic Positioning**: Directly manages cursor position through VS Code API
-- **Seamless Experience**: No external tools needed, works out of the box
-- **Smart Detection**: Only formats files that actually need formatting
-
-#### 2. CLI with Cursor Preservation
+#### CLI with Cursor Preservation
 For other editors or advanced use cases:
 1. **Input Tracking**: Accepts cursor position via `--cursor-offset` flag
 2. **Smart Mapping**: Calculates where your cursor should be in the formatted content
@@ -122,9 +88,6 @@ For other editors or advanced use cases:
 4. **Editor Integration**: Compatible with any editor that can parse the output
 
 ### Integration Examples
-
-#### VS Code Extension (Zero Configuration):
-Install the package and the extension works automatically with perfect cursor preservation.
 
 #### Run on Save Integration:
 ```bash

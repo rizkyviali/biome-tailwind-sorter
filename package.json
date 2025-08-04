@@ -1,33 +1,27 @@
 {
   "name": "biome-tailwind-sorter",
-  "version": "0.2.3",
-  "description": "A Biome plugin and formatter for sorting Tailwind CSS classes according to official order",
-  "main": "dist/extension.js",
-  "types": "dist/index.d.ts",
+  "version": "0.2.5",
+  "description": "A high-performance Rust CLI tool for sorting Tailwind CSS classes according to official order",
   "bin": {
     "biome-tailwind-sorter": "target/release/biome-tailwind-sorter"
   },
   "scripts": {
-    "build": "cargo build --release && tsc",
-    "build:rust": "cargo build --release",
-    "build:extension": "tsc",
+    "build": "cargo build --release",
     "dev": "cargo build",
     "test": "cargo test",
     "prepublishOnly": "npm run build",
-    "format": "cargo run -- --write",
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./"
+    "format": "cargo run -- --write"
   },
   "keywords": [
-    "biome",
-    "plugin",
+    "rust",
+    "cli",
     "tailwind",
     "css",
     "formatter",
-    "linter",
     "class-sorting",
     "auto-format",
-    "format-on-save"
+    "format-on-save",
+    "cursor-preservation"
   ],
   "author": "Rizky Viali",
   "license": "MIT",
@@ -39,66 +33,14 @@
     "url": "https://github.com/rizkyviali/biome-tailwind-sorter/issues"
   },
   "homepage": "https://github.com/rizkyviali/biome-tailwind-sorter#readme",
-  "devDependencies": {
-    "@types/jest": "^29.0.0",
-    "@types/node": "^20.0.0",
-    "@types/vscode": "^1.60.0",
-    "jest": "^29.0.0",
-    "ts-jest": "^29.4.0",
-    "typescript": "^5.0.0"
-  },
-  "peerDependencies": {
-    "@biomejs/biome": "^2.0.0"
-  },
   "files": [
     "target/release/biome-tailwind-sorter",
-    "dist/extension.js",
-    "dist/extension.d.ts",
     "README.md",
     "LICENSE",
     "Cargo.toml",
-    "src",
-    "extension"
+    "src"
   ],
   "engines": {
-    "node": ">=16.0.0",
-    "vscode": "^1.60.0"
-  },
-  "activationEvents": [
-    "onLanguage:javascript",
-    "onLanguage:typescript",
-    "onLanguage:javascriptreact", 
-    "onLanguage:typescriptreact",
-    "onLanguage:html",
-    "onLanguage:vue"
-  ],
-  "contributes": {
-    "commands": [
-      {
-        "command": "biome-tailwind-sorter.formatDocument",
-        "title": "Format Tailwind Classes",
-        "category": "Biome Tailwind Sorter"
-      },
-      {
-        "command": "biome-tailwind-sorter.toggleFormatOnSave",
-        "title": "Toggle Format on Save",
-        "category": "Biome Tailwind Sorter"
-      }
-    ],
-    "configuration": {
-      "title": "Biome Tailwind Sorter",
-      "properties": {
-        "biome-tailwind-sorter.formatOnSave": {
-          "type": "boolean",
-          "default": true,
-          "description": "Format Tailwind classes on save"
-        },
-        "biome-tailwind-sorter.preserveCursor": {
-          "type": "boolean",
-          "default": true,
-          "description": "Preserve cursor position after formatting"
-        }
-      }
-    }
+    "node": ">=16.0.0"
   }
 }
