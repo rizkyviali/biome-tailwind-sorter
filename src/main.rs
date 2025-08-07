@@ -209,7 +209,7 @@ fn get_files(patterns: &[&String]) -> Vec<String> {
 }
 
 fn should_process_file(file_path: &str) -> bool {
-    let supported_extensions = [".js", ".jsx", ".ts", ".tsx", ".html", ".vue"];
+    let supported_extensions = [".js", ".jsx", ".ts", ".tsx", ".html", ".vue", ".astro"];
     if let Some(extension) = Path::new(file_path).extension() {
         if let Some(ext_str) = extension.to_str() {
             return supported_extensions.contains(&format!(".{}", ext_str).as_str());
@@ -233,6 +233,7 @@ mod tests {
         assert!(should_process_file("test.tsx"));
         assert!(should_process_file("test.html"));
         assert!(should_process_file("test.vue"));
+        assert!(should_process_file("test.astro"));
         assert!(!should_process_file("test.txt"));
         assert!(!should_process_file("test.css"));
     }

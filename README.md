@@ -50,7 +50,7 @@ For seamless VS Code integration:
   "emeraldwalk.runonsave": {
     "commands": [
       {
-        "match": "\\.(jsx?|tsx?|html|vue)$",
+        "match": "\\.(jsx?|tsx?|html|vue|astro)$",
         "cmd": "npx biome-tailwind-sorter --write --preserve-cursor --cursor-offset ${cursor} ${file}"
       }
     ]
@@ -143,6 +143,7 @@ npx biome-tailwind-sorter --write --preserve-cursor --cursor-offset ${cursor} ${
 - **HTML** - `class` attributes
 - **JSX/TSX** - `className` attributes  
 - **Vue** - `class` attributes
+- **Astro** - `class` and `className` attributes
 
 ## 🎨 Class Ordering
 
@@ -288,6 +289,12 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 5. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
 6. Push to the branch (`git push origin feature/AmazingFeature`)
 7. Open a Pull Request
+
+## ☕ Support
+
+If this project helps you, consider supporting its development:
+
+[![Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/rizkyviali)
 
 ## 📄 License
 
