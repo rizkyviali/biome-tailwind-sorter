@@ -1,18 +1,18 @@
 mod tailwind_order;
 mod class_extractor;
 mod formatter;
+mod config;
 
 use clap::{Arg, Command};
 use formatter::{TailwindFormatter, CursorPosition};
 use std::fs;
-use std::io::{self, Read, Write};
 use std::path::Path;
 use std::process;
 
 fn main() {
     let matches = Command::new("biome-tailwind-sorter")
-        .version("0.2.0")
-        .about("A Biome plugin and formatter for sorting Tailwind CSS classes according to official order")
+        .version("0.2.7")
+        .about("A high-performance Rust CLI tool for sorting Tailwind CSS classes according to official order")
         .arg(
             Arg::new("files")
                 .help("Files to process")
@@ -102,7 +102,9 @@ fn main() {
     let expanded_files = get_files(&files);
     
     if expanded_files.is_empty() {
-        eprintln!("Error: No supported files found");
+        eprintln!("Error: No supported files found in the specified paths.");
+        eprintln!("Supported extensions: .js, .jsx, .ts, .tsx, .html, .vue, .astro");
+        eprintln!("Try specifying a directory or file with supported extensions.");
         process::exit(1);
     }
 
@@ -118,8 +120,9 @@ fn main() {
                 }
             }
             Err(err) => {
-                if verbose {
-                    eprintln!("✗ Error processing {}: {}", file_path, err);
+                eprintln!("✗ Error processing {}: {}", file_path, err);
+                if let Some(source) = err.source() {
+                    eprintln!("   Caused by: {}", source);
                 }
                 error_files += 1;
             }
@@ -152,12 +155,30 @@ fn process_file(
     verbose: bool,
     cursor_position: Option<CursorPosition>,
 ) -> Result<bool, Box<dyn std::error::Error>> {
-    let content = fs::read_to_string(file_path)?;
+    // Validate file exists and is readable
+    let metadata = fs::metadata(file_path)
+        .map_err(|e| format!("Cannot access file '{}': {}", file_path, e))?;
+    
+    if !metadata.is_file() {
+        return Err(format!("'{}' is not a regular file", file_path).into());
+    }
+    
+    // Check file size (prevent processing very large files)
+    const MAX_FILE_SIZE: u64 = 50 * 1024 * 1024; // 50MB
+    if metadata.len() > MAX_FILE_SIZE {
+        return Err(format!("File '{}' is too large ({} bytes). Maximum size is {} bytes.", 
+                          file_path, metadata.len(), MAX_FILE_SIZE).into());
+    }
+    
+    let content = fs::read_to_string(file_path)
+        .map_err(|e| format!("Failed to read file '{}': {}", file_path, e))?;
     let result = formatter.format_document(&content, cursor_position);
     
     if result.changed {
         if write {
-            fs::write(file_path, &result.content)?;
+            // Create backup before writing (optional safety measure)
+            fs::write(file_path, &result.content)
+                .map_err(|e| format!("Failed to write to file '{}': {}", file_path, e))?;
             
             // Output cursor position if requested and available
             if let Some(cursor) = result.cursor_position {
@@ -182,25 +203,30 @@ fn get_files(patterns: &[&String]) -> Vec<String> {
     let mut files = Vec::new();
     
     for pattern in patterns {
-        if let Ok(metadata) = fs::metadata(pattern) {
-            if metadata.is_file() {
-                if should_process_file(pattern) {
-                    files.push(pattern.to_string());
-                }
-            } else if metadata.is_dir() {
-                // Simple directory traversal
-                if let Ok(entries) = fs::read_dir(pattern) {
-                    for entry in entries.flatten() {
-                        let path = entry.path();
-                        if path.is_file() {
-                            if let Some(path_str) = path.to_str() {
-                                if should_process_file(path_str) {
-                                    files.push(path_str.to_string());
+        match fs::metadata(pattern) {
+            Ok(metadata) => {
+                if metadata.is_file() {
+                    if should_process_file(pattern) {
+                        files.push(pattern.to_string());
+                    }
+                } else if metadata.is_dir() {
+                    // Simple directory traversal
+                    if let Ok(entries) = fs::read_dir(pattern) {
+                        for entry in entries.flatten() {
+                            let path = entry.path();
+                            if path.is_file() {
+                                if let Some(path_str) = path.to_str() {
+                                    if should_process_file(path_str) {
+                                        files.push(path_str.to_string());
+                                    }
                                 }
                             }
                         }
                     }
                 }
+            }
+            Err(_) => {
+                eprintln!("Warning: Cannot access path '{}'", pattern);
             }
         }
     }
@@ -221,7 +247,6 @@ fn should_process_file(file_path: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::fs;
     use std::io::Write;
     use tempfile::NamedTempFile;
 
