@@ -1,9 +1,9 @@
 use crate::class_extractor::{
-    extract_class_names, reconstruct_class_string, contains_tailwind_classes, QuoteType,
+    extract_class_names, reconstruct_class_string, contains_tailwind_classes,
 };
 use crate::tailwind_order::sort_tailwind_classes;
 use regex::Regex;
-use std::cmp::Ordering;
+use std::sync::LazyLock;
 
 #[derive(Debug, Clone)]
 pub struct CursorPosition {
@@ -26,8 +26,8 @@ pub struct ClassMatch {
     pub prefix: String,
     pub classes: String,
     pub suffix: String,
-    pub line_start: usize,
-    pub line_end: usize,
+    pub _line_start: usize,
+    pub _line_end: usize,
 }
 
 pub struct TailwindFormatter {
@@ -40,8 +40,15 @@ impl TailwindFormatter {
     }
 
     pub fn format_document(&self, source: &str, cursor_pos: Option<CursorPosition>) -> FormatResult {
-        let double_quote_regex = Regex::new(r#"(class(?:Name)?=")([^"]*?)""#).unwrap();
-        let single_quote_regex = Regex::new(r#"(class(?:Name)?=')([^']*?)'"#).unwrap();
+        static DOUBLE_QUOTE_REGEX: LazyLock<Regex> = LazyLock::new(|| {
+            Regex::new(r#"(class(?:Name)?=")([^"]*?)""#).unwrap()
+        });
+        static SINGLE_QUOTE_REGEX: LazyLock<Regex> = LazyLock::new(|| {
+            Regex::new(r#"(class(?:Name)?=')([^']*?)'"#).unwrap()
+        });
+        
+        let double_quote_regex = &*DOUBLE_QUOTE_REGEX;
+        let single_quote_regex = &*SINGLE_QUOTE_REGEX;
         let mut result = source.to_string();
         let mut offset_adjustment = 0i32;
         let mut changed = false;
@@ -62,8 +69,8 @@ impl TailwindFormatter {
                     prefix: prefix.to_string(),
                     classes: classes.to_string(),
                     suffix: "\"".to_string(),
-                    line_start: self.get_line_from_offset(source, m.start()),
-                    line_end: self.get_line_from_offset(source, m.end()),
+                    _line_start: self.get_line_from_offset(source, m.start()),
+                    _line_end: self.get_line_from_offset(source, m.end()),
                 });
             }
         }
@@ -80,8 +87,8 @@ impl TailwindFormatter {
                     prefix: prefix.to_string(),
                     classes: classes.to_string(),
                     suffix: "'".to_string(),
-                    line_start: self.get_line_from_offset(source, m.start()),
-                    line_end: self.get_line_from_offset(source, m.end()),
+                    _line_start: self.get_line_from_offset(source, m.start()),
+                    _line_end: self.get_line_from_offset(source, m.end()),
                 });
             }
         }
@@ -246,7 +253,7 @@ impl TailwindFormatter {
         &self,
         target_class: &str,
         sorted_classes: &[String],
-        sorted_string: &str,
+        _sorted_string: &str,
     ) -> Option<usize> {
         if let Some(index) = sorted_classes.iter().position(|c| c == target_class) {
             let mut pos = 0;

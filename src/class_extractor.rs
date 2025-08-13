@@ -4,8 +4,8 @@ use std::sync::LazyLock;
 #[derive(Debug, Clone)]
 pub struct ClassAttribute {
     pub value: String,
-    pub start_pos: usize,
-    pub end_pos: usize,
+    pub _start_pos: usize,
+    pub _end_pos: usize,
     pub is_multiline: bool,
     pub quotes: QuoteType,
 }
@@ -83,8 +83,8 @@ pub fn parse_class_attribute(attribute_value: &str, attribute_name: &str) -> Opt
     
     Some(ClassAttribute {
         value: clean_value.to_string(),
-        start_pos: 0, // Will be set by the caller
-        end_pos: clean_value.len(),
+        _start_pos: 0, // Will be set by the caller
+        _end_pos: clean_value.len(),
         is_multiline,
         quotes,
     })
@@ -132,13 +132,6 @@ pub fn is_tailwind_class(class_name: &str) -> bool {
     TAILWIND_REGEX_PATTERNS.iter().any(|regex| regex.is_match(class_name))
 }
 
-pub fn filter_tailwind_classes(class_names: &[String]) -> Vec<String> {
-    class_names
-        .iter()
-        .filter(|class_name| is_tailwind_class(class_name))
-        .cloned()
-        .collect()
-}
 
 pub fn contains_tailwind_classes(class_names: &[String]) -> bool {
     class_names.iter().any(|class_name| is_tailwind_class(class_name))

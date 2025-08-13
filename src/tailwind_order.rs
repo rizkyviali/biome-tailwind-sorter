@@ -380,10 +380,6 @@ pub fn sort_tailwind_classes(classes: &[String]) -> Vec<String> {
     parsed_classes.into_iter().map(|c| c.name).collect()
 }
 
-pub fn are_classes_sorted(classes: &[String]) -> bool {
-    let sorted = sort_tailwind_classes(classes);
-    classes == sorted
-}
 
 #[cfg(test)]
 mod tests {
