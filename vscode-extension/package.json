@@ -1,0 +1,98 @@
+{
+  "name": "biome-tailwind-sorter-vscode",
+  "displayName": "Biome Tailwind Sorter",
+  "description": "VS Code extension for automatically sorting Tailwind CSS classes with cursor preservation",
+  "version": "0.1.0",
+  "publisher": "rizkyviali",
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": [
+    "Formatters",
+    "Other"
+  ],
+  "keywords": [
+    "tailwind",
+    "css",
+    "formatter",
+    "sort",
+    "classes",
+    "cursor-preservation"
+  ],
+  "activationEvents": [
+    "onLanguage:html",
+    "onLanguage:javascript",
+    "onLanguage:javascriptreact",
+    "onLanguage:typescript",
+    "onLanguage:typescriptreact",
+    "onLanguage:vue",
+    "onLanguage:astro"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "biome-tailwind-sorter.sortClasses",
+        "title": "Sort Tailwind Classes"
+      },
+      {
+        "command": "biome-tailwind-sorter.sortClassesInFile",
+        "title": "Sort Tailwind Classes in File"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "biome-tailwind-sorter.sortClasses",
+        "key": "ctrl+shift+t",
+        "mac": "cmd+shift+t",
+        "when": "editorTextFocus"
+      }
+    ],
+    "configuration": {
+      "type": "object",
+      "title": "Biome Tailwind Sorter",
+      "properties": {
+        "biome-tailwind-sorter.enable": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable/disable the Biome Tailwind Sorter extension"
+        },
+        "biome-tailwind-sorter.formatOnSave": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically sort Tailwind classes on file save"
+        },
+        "biome-tailwind-sorter.binaryPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to the biome-tailwind-sorter binary. If empty, will try to find it in PATH or node_modules"
+        },
+        "biome-tailwind-sorter.languages": {
+          "type": "array",
+          "default": ["html", "javascript", "javascriptreact", "typescript", "typescriptreact", "vue", "astro"],
+          "description": "Languages to enable Tailwind class sorting for"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.74.0",
+    "@types/node": "16.x",
+    "typescript": "^4.9.4"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rizkyviali/biome-tailwind-sorter.git",
+    "directory": "vscode-extension"
+  },
+  "bugs": {
+    "url": "https://github.com/rizkyviali/biome-tailwind-sorter/issues"
+  },
+  "homepage": "https://github.com/rizkyviali/biome-tailwind-sorter#readme",
+  "license": "MIT"
+}
