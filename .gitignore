@@ -113,6 +113,14 @@ logs
 ehthumbs.db
 Thumbs.db
 
+# Rust
+target/
+Cargo.lock
+*.rs.bk
+
+# Benchmark outputs
+criterion/
+
 #Claude
 .claude
 CLAUDE.md
