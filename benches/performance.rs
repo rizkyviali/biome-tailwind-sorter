@@ -67,7 +67,7 @@ fn bench_sort_classes(c: &mut Criterion) {
         "bg-blue-500".to_string(), "m-2".to_string()
     ];
     
-    let medium_classes = vec![
+    let medium_classes: Vec<String> = vec![
         "text-red-500", "p-4", "flex", "bg-blue-500", "m-2", "hover:bg-red-600",
         "rounded-lg", "font-semibold", "text-white", "inline-block", "border",
         "shadow-lg", "transition-colors", "duration-200", "ease-in-out",
@@ -75,7 +75,7 @@ fn bench_sort_classes(c: &mut Criterion) {
         "focus:ring-blue-500", "focus:ring-opacity-50"
     ].iter().map(|s| s.to_string()).collect();
     
-    let large_classes = (0..100).map(|i| {
+    let large_classes: Vec<String> = (0..100).map(|i| {
         let class_pool = [
             "text-red-500", "p-4", "flex", "bg-blue-500", "m-2", "hover:bg-red-600",
             "rounded-lg", "font-semibold", "text-white", "inline-block"
