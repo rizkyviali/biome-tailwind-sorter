@@ -2,12 +2,12 @@
 name = "biome-tailwind-sorter"
 version = "0.2.7"
 edition = "2021"
-description = "A Biome plugin and formatter for sorting Tailwind CSS classes according to official order"
+description = "A high-performance Rust CLI tool for sorting Tailwind CSS classes according to official order"
 authors = ["Rizky Viali"]
 license = "MIT"
 repository = "https://github.com/rizkyviali/biome-tailwind-sorter.git"
 homepage = "https://github.com/rizkyviali/biome-tailwind-sorter#readme"
-keywords = ["biome", "tailwind", "css", "formatter", "linter"]
+keywords = ["rust", "cli", "tailwind", "css", "formatter"]
 
 [[bin]]
 name = "biome-tailwind-sorter"
@@ -22,9 +22,15 @@ phf = { version = "0.11", features = ["macros"] }
 
 [dev-dependencies]
 tempfile = "3.8"
+serde_json = "1.0"
+criterion = { version = "0.5", features = ["html_reports"] }
 
 [profile.release]
 opt-level = 3
 lto = true
 codegen-units = 1
 panic = "abort"
+
+[[bench]]
+name = "performance"
+harness = false
