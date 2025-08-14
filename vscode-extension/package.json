@@ -11,6 +11,10 @@
     "Formatters",
     "Other"
   ],
+  "galleryBanner": {
+    "color": "#1e293b",
+    "theme": "dark"
+  },
   "keywords": [
     "tailwind",
     "css",
@@ -76,14 +80,31 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./"
+    "vscode:prepublish": "npm run package",
+    "compile": "webpack",
+    "compile-tsc": "tsc -p ./",
+    "watch": "webpack --watch",
+    "watch-tsc": "tsc -watch -p ./",
+    "package": "webpack --mode production --devtool hidden-source-map",
+    "pretest": "npm run compile-tsc && npm run lint",
+    "lint": "eslint src --ext ts",
+    "vsce-package": "vsce package",
+    "publish": "vsce publish"
   },
   "devDependencies": {
     "@types/vscode": "^1.74.0",
-    "@types/node": "16.x",
-    "typescript": "^4.9.4"
+    "@types/node": "18.x",
+    "@types/mocha": "^10.0.1",
+    "@typescript-eslint/eslint-plugin": "^6.4.0",
+    "@typescript-eslint/parser": "^6.4.0",
+    "@vscode/test-electron": "^2.3.4",
+    "eslint": "^8.47.0",
+    "mocha": "^10.2.0",
+    "typescript": "^5.1.6",
+    "@vscode/vsce": "^2.21.0",
+    "ts-loader": "^9.4.4",
+    "webpack": "^5.88.1",
+    "webpack-cli": "^5.1.4"
   },
   "repository": {
     "type": "git",

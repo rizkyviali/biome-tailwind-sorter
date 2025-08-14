@@ -19,7 +19,7 @@ fn generate_test_content(num_components: usize, classes_per_component: usize) ->
     
     let mut content = String::new();
     for i in 0..num_components {
-        content.push_str(&format!(r#"<div className=""#));
+        content.push_str(&r#"<div className=""#.to_string());
         
         // Add classes in reverse order to ensure they need sorting
         for j in (0..classes_per_component).rev() {
@@ -30,7 +30,7 @@ fn generate_test_content(num_components: usize, classes_per_component: usize) ->
             }
         }
         
-        content.push_str(&format!(r#"">Component {}</div>"#, i));
+        content.push_str(&format!(r#"">Component {i}</div>"#));
         content.push('\n');
     }
     content

@@ -287,7 +287,7 @@ fn get_class_order(base_pattern: &str, full_class: &str) -> u32 {
     
     // Check for common patterns
     for (pattern, &order) in TAILWIND_ORDER_MAP.entries() {
-        if full_class.starts_with(&format!("{}-", pattern)) || full_class == *pattern {
+        if full_class.starts_with(&format!("{pattern}-")) || full_class == *pattern {
             return order;
         }
     }

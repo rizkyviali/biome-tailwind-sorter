@@ -2,6 +2,7 @@ use regex::Regex;
 use std::sync::LazyLock;
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct ClassAttribute {
     pub value: String,
     pub _start_pos: usize,
@@ -11,6 +12,7 @@ pub struct ClassAttribute {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+#[allow(dead_code)]
 pub enum QuoteType {
     Double,
     Single,
@@ -19,7 +21,6 @@ pub enum QuoteType {
 
 pub fn extract_class_names(class_string: &str) -> Vec<String> {
     class_string
-        .trim()
         .split_whitespace()
         .filter(|cls| !cls.is_empty())
         .map(|cls| cls.to_string())
@@ -42,7 +43,7 @@ pub fn reconstruct_class_string(
     }
     
     // Simple heuristic: distribute classes evenly across lines
-    let classes_per_line = (class_names.len() + lines.len() - 1) / lines.len(); // Ceiling division
+    let classes_per_line = class_names.len().div_ceil(lines.len()); // Ceiling division
     let mut result = Vec::new();
     
     for (i, line) in lines.iter().enumerate() {
@@ -65,6 +66,7 @@ pub fn reconstruct_class_string(
     result.join("\n")
 }
 
+#[allow(dead_code)]
 pub fn parse_class_attribute(attribute_value: &str, attribute_name: &str) -> Option<ClassAttribute> {
     if !matches!(attribute_name, "class" | "className") {
         return None;
@@ -122,7 +124,7 @@ pub fn is_tailwind_class(class_name: &str) -> bool {
     ];
     
     // Remove modifiers to get base class
-    let base_class = class_name.split(':').last().unwrap_or("");
+    let base_class = class_name.split(':').next_back().unwrap_or("");
     
     if exact_tailwind_classes.contains(&base_class) {
         return true;

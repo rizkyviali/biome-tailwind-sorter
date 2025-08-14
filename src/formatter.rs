@@ -285,6 +285,7 @@ impl TailwindFormatter {
 }
 
 // Convenience function for basic formatting without cursor preservation
+#[allow(dead_code)]
 pub fn format_document(source: &str) -> String {
     let formatter = TailwindFormatter::new(false);
     formatter.format_document(source, None).content

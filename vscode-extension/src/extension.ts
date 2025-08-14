@@ -3,13 +3,26 @@ import * as cp from 'child_process';
 import * as path from 'path';
 import * as fs from 'fs';
 
-interface CursorPosition {
-    line: number;
-    column: number;
-    offset: number;
-}
+// CursorPosition interface removed as it's not used
 
 class TailwindSorter {
+    private statusBarItem: vscode.StatusBarItem;
+    
+    constructor() {
+        this.statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
+        this.statusBarItem.command = 'biome-tailwind-sorter.sortClasses';
+        this.statusBarItem.text = '$(symbol-class) Sort TW';
+        this.statusBarItem.tooltip = 'Sort Tailwind CSS Classes';
+    }
+    
+    public showStatusBar(show: boolean = true) {
+        if (show) {
+            this.statusBarItem.show();
+        } else {
+            this.statusBarItem.hide();
+        }
+    }
+    
     private getBinaryPath(): string {
         const config = vscode.workspace.getConfiguration('biome-tailwind-sorter');
         const configuredPath = config.get<string>('binaryPath');
@@ -95,12 +108,44 @@ class TailwindSorter {
                         newCursorPosition: newCursorPosition || cursorPosition
                     });
                 } else {
-                    reject(new Error(`biome-tailwind-sorter exited with code ${code}: ${stderr}`));
+                    let errorMessage = `Tailwind sorter exited with code ${code}`;
+                    if (stderr.trim()) {
+                        errorMessage += `: ${stderr.trim()}`;
+                    }
+                    
+                    // Provide helpful error messages
+                    if (code === 127) {
+                        errorMessage = 'Binary not found. Please install biome-tailwind-sorter: npm install biome-tailwind-sorter';
+                    } else if (code === 126) {
+                        errorMessage = 'Permission denied. Please check binary permissions or set a custom path in settings';
+                    }
+                    
+                    reject(new Error(errorMessage));
                 }
             });
             
             child.on('error', (error) => {
-                reject(new Error(`Failed to spawn biome-tailwind-sorter: ${error.message}`));
+                let errorMessage = `Failed to execute biome-tailwind-sorter`;
+                
+                if (error.message.includes('ENOENT')) {
+                    errorMessage = 'Binary not found. Please install biome-tailwind-sorter or set custom path in settings';
+                } else if (error.message.includes('EACCES')) {
+                    errorMessage = 'Permission denied. Please check binary permissions';
+                } else {
+                    errorMessage += `: ${error.message}`;
+                }
+                
+                reject(new Error(errorMessage));
+            });
+            
+            // Add timeout to prevent hanging
+            const timeout = setTimeout(() => {
+                child.kill();
+                reject(new Error('Operation timed out. The file might be too large or complex'));
+            }, 30000); // 30 seconds timeout
+            
+            child.on('close', () => {
+                clearTimeout(timeout);
             });
             
             // Send document content to stdin
@@ -112,6 +157,29 @@ class TailwindSorter {
 
 export function activate(context: vscode.ExtensionContext) {
     const sorter = new TailwindSorter();
+    
+    // Show status bar for supported files
+    const updateStatusBar = () => {
+        const editor = vscode.window.activeTextEditor;
+        if (editor) {
+            const config = vscode.workspace.getConfiguration('biome-tailwind-sorter');
+            const languages = config.get<string[]>('languages', [
+                'html', 'javascript', 'javascriptreact', 'typescript', 'typescriptreact', 'vue', 'astro'
+            ]);
+            
+            if (languages.includes(editor.document.languageId)) {
+                sorter.showStatusBar(true);
+            } else {
+                sorter.showStatusBar(false);
+            }
+        } else {
+            sorter.showStatusBar(false);
+        }
+    };
+    
+    // Update status bar on editor change
+    vscode.window.onDidChangeActiveTextEditor(updateStatusBar);
+    updateStatusBar();
     
     // Register commands
     const sortClassesCommand = vscode.commands.registerCommand(
@@ -131,27 +199,51 @@ export function activate(context: vscode.ExtensionContext) {
             const cursorPosition = editor.selection.active;
             
             try {
-                const result = await sorter.sortTailwindClasses(document, true, cursorPosition);
-                
-                await editor.edit(editBuilder => {
-                    const fullRange = new vscode.Range(
-                        document.positionAt(0),
-                        document.positionAt(document.getText().length)
-                    );
-                    editBuilder.replace(fullRange, result.content);
+                // Show progress for longer operations
+                await vscode.window.withProgress({
+                    location: vscode.ProgressLocation.Notification,
+                    title: "Sorting Tailwind classes...",
+                    cancellable: false
+                }, async (progress) => {
+                    progress.report({ increment: 0 });
+                    
+                    const result = await sorter.sortTailwindClasses(document, true, cursorPosition);
+                    
+                    progress.report({ increment: 50 });
+                    
+                    await editor.edit(editBuilder => {
+                        const fullRange = new vscode.Range(
+                            document.positionAt(0),
+                            document.positionAt(document.getText().length)
+                        );
+                        editBuilder.replace(fullRange, result.content);
+                    });
+                    
+                    progress.report({ increment: 100 });
+                    
+                    // Restore cursor position
+                    if (result.newCursorPosition) {
+                        editor.selection = new vscode.Selection(
+                            result.newCursorPosition,
+                            result.newCursorPosition
+                        );
+                    }
                 });
                 
-                // Restore cursor position
-                if (result.newCursorPosition) {
-                    editor.selection = new vscode.Selection(
-                        result.newCursorPosition,
-                        result.newCursorPosition
-                    );
+                // Only show success message if classes were actually changed
+                const originalContent = document.getText();
+                const newContent = document.getText();
+                if (originalContent !== newContent) {
+                    vscode.window.showInformationMessage('✓ Tailwind classes sorted!');
                 }
-                
-                vscode.window.showInformationMessage('Tailwind classes sorted!');
             } catch (error) {
-                vscode.window.showErrorMessage(`Failed to sort Tailwind classes: ${error}`);
+                const errorMessage = error instanceof Error ? error.message : String(error);
+                vscode.window.showErrorMessage(`Failed to sort Tailwind classes: ${errorMessage}`, 'Open Settings')
+                    .then(selection => {
+                        if (selection === 'Open Settings') {
+                            vscode.commands.executeCommand('workbench.action.openSettings', 'biome-tailwind-sorter');
+                        }
+                    });
             }
         }
     );

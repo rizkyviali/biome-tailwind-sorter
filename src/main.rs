@@ -120,9 +120,9 @@ fn main() {
                 }
             }
             Err(err) => {
-                eprintln!("✗ Error processing {}: {}", file_path, err);
+                eprintln!("✗ Error processing {file_path}: {err}");
                 if let Some(source) = err.source() {
-                    eprintln!("   Caused by: {}", source);
+                    eprintln!("   Caused by: {source}");
                 }
                 error_files += 1;
             }
@@ -136,7 +136,7 @@ fn main() {
         println!("  {} files already formatted", expanded_files.len() - changed_files - error_files);
         
         if error_files > 0 {
-            println!("  {} files had errors", error_files);
+            println!("  {error_files} files had errors");
         }
     }
 
@@ -157,10 +157,10 @@ fn process_file(
 ) -> Result<bool, Box<dyn std::error::Error>> {
     // Validate file exists and is readable
     let metadata = fs::metadata(file_path)
-        .map_err(|e| format!("Cannot access file '{}': {}", file_path, e))?;
+        .map_err(|e| format!("Cannot access file '{file_path}': {e}"))?;
     
     if !metadata.is_file() {
-        return Err(format!("'{}' is not a regular file", file_path).into());
+        return Err(format!("'{file_path}' is not a regular file").into());
     }
     
     // Check file size (prevent processing very large files)
@@ -171,14 +171,14 @@ fn process_file(
     }
     
     let content = fs::read_to_string(file_path)
-        .map_err(|e| format!("Failed to read file '{}': {}", file_path, e))?;
+        .map_err(|e| format!("Failed to read file '{file_path}': {e}"))?;
     let result = formatter.format_document(&content, cursor_position);
     
     if result.changed {
         if write {
             // Create backup before writing (optional safety measure)
             fs::write(file_path, &result.content)
-                .map_err(|e| format!("Failed to write to file '{}': {}", file_path, e))?;
+                .map_err(|e| format!("Failed to write to file '{file_path}': {e}"))?;
             
             // Output cursor position if requested and available
             if let Some(cursor) = result.cursor_position {
@@ -187,13 +187,13 @@ fn process_file(
             }
             
             if verbose {
-                println!("✓ Formatted {}", file_path);
+                println!("✓ Formatted {file_path}");
             }
         } else if verbose {
-            println!("⚠ {} needs formatting", file_path);
+            println!("⚠ {file_path} needs formatting");
         }
     } else if verbose {
-        println!("✓ {} is already formatted", file_path);
+        println!("✓ {file_path} is already formatted");
     }
     
     Ok(result.changed)
@@ -226,7 +226,7 @@ fn get_files(patterns: &[&String]) -> Vec<String> {
                 }
             }
             Err(_) => {
-                eprintln!("Warning: Cannot access path '{}'", pattern);
+                eprintln!("Warning: Cannot access path '{pattern}'");
             }
         }
     }
@@ -238,7 +238,7 @@ fn should_process_file(file_path: &str) -> bool {
     let supported_extensions = [".js", ".jsx", ".ts", ".tsx", ".html", ".vue", ".astro"];
     if let Some(extension) = Path::new(file_path).extension() {
         if let Some(ext_str) = extension.to_str() {
-            return supported_extensions.contains(&format!(".{}", ext_str).as_str());
+            return supported_extensions.contains(&format!(".{ext_str}").as_str());
         }
     }
     false

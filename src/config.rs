@@ -88,6 +88,7 @@ impl Default for Config {
 
 impl Config {
     /// Load configuration from a file
+    #[allow(dead_code)]
     pub fn load_from_file<P: AsRef<Path>>(path: P) -> Result<Config, Box<dyn std::error::Error>> {
         let content = fs::read_to_string(path)?;
         
@@ -101,6 +102,7 @@ impl Config {
     }
     
     /// Find and load configuration from common locations
+    #[allow(dead_code)]
     pub fn load() -> Config {
         let config_files = [
             ".tailwindsorterrc",
@@ -130,6 +132,7 @@ impl Config {
     }
     
     /// Save configuration to a file
+    #[allow(dead_code)]
     pub fn save_to_file<P: AsRef<Path>>(&self, path: P) -> Result<(), Box<dyn std::error::Error>> {
         let content = serde_json::to_string_pretty(self)?;
         fs::write(path, content)?;
@@ -137,6 +140,7 @@ impl Config {
     }
     
     /// Check if a file should be processed based on extension
+    #[allow(dead_code)]
     pub fn should_process_file(&self, file_path: &str) -> bool {
         if let Some(extension) = Path::new(file_path).extension() {
             if let Some(ext_str) = extension.to_str() {
@@ -147,6 +151,7 @@ impl Config {
     }
     
     /// Check if a path should be ignored
+    #[allow(dead_code)]
     pub fn should_ignore_path(&self, path: &str) -> bool {
         self.ignore.iter().any(|ignore_pattern| {
             // Simple pattern matching - could be enhanced with glob patterns
@@ -155,11 +160,13 @@ impl Config {
     }
     
     /// Get the custom class order if defined
+    #[allow(dead_code)]
     pub fn get_custom_order(&self) -> Option<&[String]> {
         self.custom_order.as_deref()
     }
     
     /// Check if a class is considered a custom class
+    #[allow(dead_code)]
     pub fn is_custom_class(&self, class_name: &str) -> bool {
         self.custom_classes.iter().any(|custom| custom == class_name)
     }
@@ -176,8 +183,8 @@ mod tests {
         let config = Config::default();
         assert!(config.extensions.contains(&"html".to_string()));
         assert!(config.extensions.contains(&"tsx".to_string()));
-        assert_eq!(config.preserve_multiline, true);
-        assert_eq!(config.recursive, true);
+        assert!(config.preserve_multiline);
+        assert!(config.recursive);
     }
 
     #[test]
@@ -204,7 +211,7 @@ mod tests {
         
         let config = Config::load_from_file(temp_file.path()).unwrap();
         assert_eq!(config.extensions, vec!["html", "jsx"]);
-        assert_eq!(config.preserve_multiline, false);
+        assert!(!config.preserve_multiline);
         assert_eq!(config.custom_classes, vec!["my-custom-class"]);
     }
 

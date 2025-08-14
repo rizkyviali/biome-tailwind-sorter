@@ -4,7 +4,7 @@ use tempfile::TempDir;
 
 fn get_binary_path() -> String {
     let output = Command::new("cargo")
-        .args(&["build", "--release", "--message-format=json"])
+        .args(["build", "--release", "--message-format=json"])
         .output()
         .expect("Failed to build binary");
         
@@ -40,7 +40,7 @@ fn test_cli_check_mode_needs_formatting() {
     
     let binary = get_binary_path();
     let output = Command::new(&binary)
-        .args(&["--check", &file_path])
+        .args(["--check", &file_path])
         .output()
         .expect("Failed to execute command");
         
@@ -57,7 +57,7 @@ fn test_cli_check_mode_already_formatted() {
     
     let binary = get_binary_path();
     let output = Command::new(&binary)
-        .args(&["--check", &file_path])
+        .args(["--check", &file_path])
         .output()
         .expect("Failed to execute command");
         
@@ -74,7 +74,7 @@ fn test_cli_write_mode_formats_file() {
     
     let binary = get_binary_path();
     let output = Command::new(&binary)
-        .args(&["--write", &file_path])
+        .args(["--write", &file_path])
         .output()
         .expect("Failed to execute command");
         
@@ -82,7 +82,7 @@ fn test_cli_write_mode_formats_file() {
     
     let formatted_content = fs::read_to_string(&file_path).expect("Failed to read formatted file");
     assert!(formatted_content.contains(r#"class="flex p-4 text-red-500""#), 
-            "File should be formatted with correct order. Got: {}", formatted_content);
+            "File should be formatted with correct order. Got: {formatted_content}");
 }
 
 #[test]
@@ -95,7 +95,7 @@ fn test_cli_cursor_preservation() {
     
     let binary = get_binary_path();
     let output = Command::new(&binary)
-        .args(&["--write", "--preserve-cursor", "--cursor-offset", "20", &file_path])
+        .args(["--write", "--preserve-cursor", "--cursor-offset", "20", &file_path])
         .output()
         .expect("Failed to execute command");
         
@@ -103,7 +103,7 @@ fn test_cli_cursor_preservation() {
     
     let stderr = String::from_utf8_lossy(&output.stderr);
     assert!(stderr.contains("CURSOR_POSITION:"), 
-            "Should output cursor position. Got stderr: {}", stderr);
+            "Should output cursor position. Got stderr: {stderr}");
 }
 
 #[test]
@@ -116,7 +116,7 @@ fn test_cli_verbose_output() {
     
     let binary = get_binary_path();
     let output = Command::new(&binary)
-        .args(&["--write", "--verbose", &file_path])
+        .args(["--write", "--verbose", &file_path])
         .output()
         .expect("Failed to execute command");
         
@@ -124,7 +124,7 @@ fn test_cli_verbose_output() {
     
     let stdout = String::from_utf8_lossy(&output.stdout);
     assert!(stdout.contains("Formatted") || stdout.contains("formatted"), 
-            "Should show formatted message in verbose mode. Got: {}", stdout);
+            "Should show formatted message in verbose mode. Got: {stdout}");
 }
 
 #[test]
@@ -141,7 +141,7 @@ fn test_cli_multiple_files() {
     
     let binary = get_binary_path();
     let output = Command::new(&binary)
-        .args(&["--write", &file1, &file2])
+        .args(["--write", &file1, &file2])
         .output()
         .expect("Failed to execute command");
         
@@ -170,7 +170,7 @@ fn test_cli_directory_processing() {
     
     let binary = get_binary_path();
     let output = Command::new(&binary)
-        .args(&["--write", temp_dir.path().to_str().unwrap()])
+        .args(["--write", temp_dir.path().to_str().unwrap()])
         .output()
         .expect("Failed to execute command");
         
@@ -194,7 +194,7 @@ fn test_cli_unsupported_files_ignored() {
     
     let binary = get_binary_path();
     let output = Command::new(&binary)
-        .args(&["--check", temp_dir.path().to_str().unwrap()])
+        .args(["--check", temp_dir.path().to_str().unwrap()])
         .output()
         .expect("Failed to execute command");
         
@@ -226,7 +226,7 @@ fn test_cli_multiline_classes() {
     
     let binary = get_binary_path();
     let output = Command::new(&binary)
-        .args(&["--write", &file_path])
+        .args(["--write", &file_path])
         .output()
         .expect("Failed to execute command");
         
@@ -242,5 +242,5 @@ fn test_cli_multiline_classes() {
     let font_pos = formatted_content.find("font-semibold").unwrap();
     let bg_pos = formatted_content.find("bg-red-500").unwrap();
     assert!(p4_pos < font_pos && font_pos < bg_pos, 
-            "Classes should be in correct order. Content: {}", formatted_content);
+            "Classes should be in correct order. Content: {formatted_content}");
 }
