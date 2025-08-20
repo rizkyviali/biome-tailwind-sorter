@@ -114,10 +114,15 @@ class TailwindSorter {
                     }
                     
                     // Provide helpful error messages
-                    if (code === 127) {
-                        errorMessage = 'Binary not found. Please install biome-tailwind-sorter: npm install biome-tailwind-sorter';
+                    if (code === 127 || code === 1) {
+                        errorMessage = `Binary not found (exit code ${code}). Try:\n` +
+                                     '1. Install: npm install biome-tailwind-sorter\n' +
+                                     '2. Build: cargo build --release\n' +
+                                     '3. Or set custom path in settings';
                     } else if (code === 126) {
-                        errorMessage = 'Permission denied. Please check binary permissions or set a custom path in settings';
+                        errorMessage = `Permission denied (exit code ${code}). Check binary permissions or set custom path in settings`;
+                    } else if (code === 2) {
+                        errorMessage = `File processing errors (exit code ${code}). Check stderr for details: ${stderr.trim()}`;
                     }
                     
                     reject(new Error(errorMessage));
@@ -298,16 +303,30 @@ export function activate(context: vscode.ExtensionContext) {
         }
         
         try {
-            const result = await sorter.sortTailwindClasses(event.document, false);
+            const editor = vscode.window.activeTextEditor;
+            if (!editor || editor.document !== event.document) {
+                return;
+            }
+            
+            const cursorPosition = editor.selection.active;
+            const result = await sorter.sortTailwindClasses(event.document, true, cursorPosition);
             
             event.waitUntil(
-                vscode.window.activeTextEditor?.edit(editBuilder => {
+                editor.edit(editBuilder => {
                     const fullRange = new vscode.Range(
                         event.document.positionAt(0),
                         event.document.positionAt(event.document.getText().length)
                     );
                     editBuilder.replace(fullRange, result.content);
-                }) || Promise.resolve(true)
+                }).then(() => {
+                    // Restore cursor position after edit
+                    if (result.newCursorPosition) {
+                        editor.selection = new vscode.Selection(
+                            result.newCursorPosition,
+                            result.newCursorPosition
+                        );
+                    }
+                })
             );
         } catch (error) {
             console.error('Failed to sort Tailwind classes on save:', error);
