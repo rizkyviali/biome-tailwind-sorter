@@ -7,8 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.8] - 2025-08-20
+
 ### Added
-- Support for `.astro` files - Astro components can now be formatted with Tailwind class sorting
 - Tailwind configuration file detection and parsing (`tailwind.config.js`, `.mjs`, `.ts`, `.json`)
 - Stdin support for piping content through the formatter
 - `--doctor` command for installation and configuration diagnostics
@@ -27,6 +28,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Binary path resolution in package.json now uses relative `./target/release/` prefix
 - Removed unused struct fields and dead code for cleaner codebase
 - Memory usage optimizations in class extraction and sorting algorithms
+
+## [0.2.7] - 2025-08-14
+
+### Added
+- Support for `.astro` files - Astro components can now be formatted with Tailwind class sorting
+
+### Fixed
+- Resolved all compilation warnings and errors
 
 ## [0.2.5] - 2025-08-04
 

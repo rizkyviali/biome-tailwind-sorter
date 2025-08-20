@@ -9,14 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Cursor position preservation during format-on-save operations
-- Improved error handling with detailed exit code messages and troubleshooting guidance
+- Improved error handling with detailed exit code messages and troubleshooting guidance  
 - Editor state consistency during formatting to prevent cursor jumping
 
 ### Changed
 - Enhanced error messages for binary not found scenarios with step-by-step installation guidance
 - Better integration with the underlying Rust binary for cursor position tracking
 
-## [0.1.0] - 2025-08-20
+## [0.1.0] - 2025-08-13
 
 ### Added
 - Initial release of Biome Tailwind Sorter VS Code extension
