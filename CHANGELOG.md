@@ -9,6 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Support for `.astro` files - Astro components can now be formatted with Tailwind class sorting
+- Tailwind configuration file detection and parsing (`tailwind.config.js`, `.mjs`, `.ts`, `.json`)
+- Stdin support for piping content through the formatter
+- `--doctor` command for installation and configuration diagnostics
+- `--debug` flag for detailed troubleshooting output
+- `--max-size` option for configurable file size limits
+- Recursive directory traversal with intelligent ignore patterns
+- Performance testing and comprehensive error handling
+
+### Changed
+- Improved formatter performance with early exits and reduced memory allocations
+- Enhanced CLI interface with better error messages and progress indicators
+- File processing now supports configurable size limits (default 10MB, was 50MB)
+- Directory traversal now recursively processes subdirectories while ignoring common build/cache folders
+
+### Fixed
+- Binary path resolution in package.json now uses relative `./target/release/` prefix
+- Removed unused struct fields and dead code for cleaner codebase
+- Memory usage optimizations in class extraction and sorting algorithms
 
 ## [0.2.5] - 2025-08-04
 
