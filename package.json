@@ -3,7 +3,7 @@
   "version": "0.2.7",
   "description": "A high-performance Rust CLI tool for sorting Tailwind CSS classes according to official order",
   "bin": {
-    "biome-tailwind-sorter": "target/release/biome-tailwind-sorter"
+    "biome-tailwind-sorter": "./target/release/biome-tailwind-sorter"
   },
   "scripts": {
     "build": "cargo build --release",
