@@ -26,8 +26,6 @@ pub struct ClassMatch {
     pub prefix: String,
     pub classes: String,
     pub suffix: String,
-    pub _line_start: usize,
-    pub _line_end: usize,
 }
 
 pub struct TailwindFormatter {
@@ -40,12 +38,22 @@ impl TailwindFormatter {
     }
 
     pub fn format_document(&self, source: &str, cursor_pos: Option<CursorPosition>) -> FormatResult {
+        // Pre-compiled regexes for better performance
         static DOUBLE_QUOTE_REGEX: LazyLock<Regex> = LazyLock::new(|| {
             Regex::new(r#"(class(?:Name)?=")([^"]*?)""#).unwrap()
         });
         static SINGLE_QUOTE_REGEX: LazyLock<Regex> = LazyLock::new(|| {
             Regex::new(r#"(class(?:Name)?=')([^']*?)'"#).unwrap()
         });
+        
+        // Early exit if no class attributes are found
+        if !source.contains("class") {
+            return FormatResult {
+                content: source.to_string(),
+                cursor_position: cursor_pos,
+                changed: false,
+            };
+        }
         
         let double_quote_regex = &*DOUBLE_QUOTE_REGEX;
         let single_quote_regex = &*SINGLE_QUOTE_REGEX;
@@ -69,8 +77,6 @@ impl TailwindFormatter {
                     prefix: prefix.to_string(),
                     classes: classes.to_string(),
                     suffix: "\"".to_string(),
-                    _line_start: self.get_line_from_offset(source, m.start()),
-                    _line_end: self.get_line_from_offset(source, m.end()),
                 });
             }
         }
@@ -87,8 +93,6 @@ impl TailwindFormatter {
                     prefix: prefix.to_string(),
                     classes: classes.to_string(),
                     suffix: "'".to_string(),
-                    _line_start: self.get_line_from_offset(source, m.start()),
-                    _line_end: self.get_line_from_offset(source, m.end()),
                 });
             }
         }
@@ -100,13 +104,14 @@ impl TailwindFormatter {
         for class_match in matches.into_iter().rev() {
             let class_names = extract_class_names(&class_match.classes);
             
-            if !contains_tailwind_classes(&class_names) {
+            // Skip if no classes or no tailwind classes found
+            if class_names.is_empty() || !contains_tailwind_classes(&class_names) {
                 continue;
             }
 
             let sorted_classes = sort_tailwind_classes(&class_names);
             
-            // Check if sorting is needed
+            // Check if sorting is needed (avoid unnecessary string operations)
             if class_names == sorted_classes {
                 continue;
             }
@@ -269,10 +274,6 @@ impl TailwindFormatter {
             }
         }
         None
-    }
-
-    fn get_line_from_offset(&self, content: &str, offset: usize) -> usize {
-        content[..offset.min(content.len())].lines().count().saturating_sub(1)
     }
 
     fn get_line_column_from_offset(&self, content: &str, offset: usize) -> (usize, usize) {

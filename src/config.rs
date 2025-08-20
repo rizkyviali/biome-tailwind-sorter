@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use std::fs;
 use std::path::Path;
 
@@ -128,7 +129,115 @@ impl Config {
             }
         }
         
-        Config::default()
+        // Try tailwind.config.js basic detection
+        let mut config = Config::default();
+        if let Some(tailwind_config) = Self::detect_tailwind_config() {
+            // Merge basic tailwind config information
+            if let Some(content) = tailwind_config.get("content") {
+                if let Some(content_array) = content.as_array() {
+                    // Extract file patterns and convert to extensions
+                    let mut extensions = vec!["html".to_string()]; // Always include HTML
+                    for pattern in content_array {
+                        if let Some(pattern_str) = pattern.as_str() {
+                            if pattern_str.contains("*.js") || pattern_str.contains("**/*.js") {
+                                extensions.push("js".to_string());
+                            }
+                            if pattern_str.contains("*.jsx") || pattern_str.contains("**/*.jsx") {
+                                extensions.push("jsx".to_string());
+                            }
+                            if pattern_str.contains("*.ts") || pattern_str.contains("**/*.ts") {
+                                extensions.push("ts".to_string());
+                            }
+                            if pattern_str.contains("*.tsx") || pattern_str.contains("**/*.tsx") {
+                                extensions.push("tsx".to_string());
+                            }
+                            if pattern_str.contains("*.vue") || pattern_str.contains("**/*.vue") {
+                                extensions.push("vue".to_string());
+                            }
+                        }
+                    }
+                    extensions.dedup();
+                    config.extensions = extensions;
+                }
+            }
+        }
+        
+        config
+    }
+    
+    /// Detect and parse basic tailwind.config.js information
+    #[allow(dead_code)]
+    fn detect_tailwind_config() -> Option<Value> {
+        let config_files = [
+            "tailwind.config.js",
+            "tailwind.config.mjs",
+            "tailwind.config.ts",
+            "tailwind.config.json",
+        ];
+        
+        for config_file in &config_files {
+            if let Ok(content) = fs::read_to_string(config_file) {
+                // For JSON files, try direct parsing
+                if config_file.ends_with(".json") {
+                    if let Ok(config) = serde_json::from_str::<Value>(&content) {
+                        return Some(config);
+                    }
+                    continue;
+                }
+                
+                // For JS/TS files, do basic parsing to extract content array
+                if let Some(config) = Self::parse_js_config(&content) {
+                    return Some(config);
+                }
+            }
+        }
+        
+        None
+    }
+    
+    /// Basic parser for JavaScript/TypeScript config files
+    #[allow(dead_code)]
+    fn parse_js_config(content: &str) -> Option<Value> {
+        // Very basic parsing - look for content array
+        if let Some(start) = content.find("content:") {
+            let after_content = &content[start + 8..];
+            if let Some(array_start) = after_content.find('[') {
+                let after_array_start = &after_content[array_start..];
+                if let Some(array_end) = after_array_start.find(']') {
+                    let array_content = &after_array_start[1..array_end];
+                    
+                    // Extract quoted strings
+                    let mut content_patterns = Vec::new();
+                    let mut in_quote = false;
+                    let mut quote_char = '"';
+                    let mut current_string = String::new();
+                    let chars = array_content.chars();
+                    
+                    for ch in chars {
+                        if !in_quote && (ch == '"' || ch == '\'') {
+                            in_quote = true;
+                            quote_char = ch;
+                            current_string.clear();
+                        } else if in_quote && ch == quote_char {
+                            in_quote = false;
+                            if !current_string.is_empty() {
+                                content_patterns.push(Value::String(current_string.clone()));
+                            }
+                        } else if in_quote {
+                            current_string.push(ch);
+                        }
+                    }
+                    
+                    if !content_patterns.is_empty() {
+                        let mut config = serde_json::Map::new();
+                        config.insert("content".to_string(), Value::Array(content_patterns));
+                        return Some(Value::Object(config));
+                    }
+                }
+            }
+        }
+        
+        None
     }
     
     /// Save configuration to a file

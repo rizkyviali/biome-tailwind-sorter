@@ -9,9 +9,7 @@ pub use class_extractor::{
     extract_class_names, 
     reconstruct_class_string, 
     contains_tailwind_classes, 
-    is_tailwind_class,
-    ClassAttribute,
-    QuoteType
+    is_tailwind_class
 };
 pub use config::Config;
 
