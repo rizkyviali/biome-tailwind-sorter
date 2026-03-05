@@ -10,6 +10,7 @@ A high-performance Rust-based formatter for automatically sorting Tailwind CSS c
 - ✅ **CLI Tool** - Standalone formatter for any project
 - ✅ **Multi-language Support** - HTML, JSX, TSX, and Vue files
 - ✅ **Multi-line Classes** - Preserves formatting for multi-line class definitions
+- ✅ **.gitignore Support** - Automatically respects .gitignore and .ignore files
 - ✅ **Smart Detection** - Only processes files that contain Tailwind classes
 - ✅ **Editor Integration** - Perfect for VS Code with Run on Save extension
 

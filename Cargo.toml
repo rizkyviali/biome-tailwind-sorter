@@ -19,6 +19,7 @@ regex = "1.10"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 phf = { version = "0.11", features = ["macros"] }
+ignore = "0.4"
 
 [dev-dependencies]
 tempfile = "3.8"
