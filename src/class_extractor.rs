@@ -35,34 +35,44 @@ pub fn reconstruct_class_string(
     if !preserve_multiline || !original_string.contains('\n') {
         return class_names.join(" ");
     }
-    
-    // For multiline, try to preserve the original formatting structure
+
     let lines: Vec<&str> = original_string.split('\n').collect();
     if lines.len() <= 1 {
         return class_names.join(" ");
     }
-    
-    // Simple heuristic: distribute classes evenly across lines
-    let classes_per_line = class_names.len().div_ceil(lines.len()); // Ceiling division
-    let mut result = Vec::new();
-    
-    for (i, line) in lines.iter().enumerate() {
-        let line_start = i * classes_per_line;
-        let line_end = std::cmp::min((i + 1) * classes_per_line, class_names.len());
-        
-        if line_start < class_names.len() {
-            let line_classes = &class_names[line_start..line_end];
-            
-            if !line_classes.is_empty() {
-                // Extract the indentation from the original line
-                let indent = line.chars()
-                    .take_while(|c| c.is_whitespace())
-                    .collect::<String>();
-                result.push(format!("{}{}", indent, line_classes.join(" ")));
-            }
-        }
+
+    // Find the indentation from the first non-empty content line
+    let indent = lines.iter()
+        .find(|l| !l.trim().is_empty())
+        .map(|l| l.chars().take_while(|c| c.is_whitespace()).collect::<String>())
+        .unwrap_or_default();
+
+    // Count leading and trailing empty-only lines to preserve them
+    let leading_count = lines.iter().take_while(|l| l.trim().is_empty()).count();
+    let trailing_count = if lines.len() > leading_count {
+        lines.iter().rev().take_while(|l| l.trim().is_empty()).count()
+    } else {
+        0
+    };
+
+    let mut result: Vec<String> = Vec::new();
+
+    // Preserve leading blank/whitespace lines (e.g. the newline after `className="`)
+    for line in lines.iter().take(leading_count) {
+        result.push(line.to_string());
     }
-    
+
+    // Each sorted class on its own indented line
+    for class in class_names {
+        result.push(format!("{}{}", indent, class));
+    }
+
+    // Preserve trailing blank/whitespace lines (e.g. the indent before the closing `"`)
+    let trailing_start = lines.len() - trailing_count;
+    for line in lines.iter().skip(trailing_start) {
+        result.push(line.to_string());
+    }
+
     result.join("\n")
 }
 
