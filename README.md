@@ -124,8 +124,8 @@ npx biome-tailwind-sorter --write --preserve-cursor --cursor-offset ${cursor} ${
     font-semibold
     text-white
     bg-red-500
-    rounded-lg
     hover:bg-red-600
+    rounded-lg
   "
 >
   Button
@@ -136,7 +136,7 @@ npx biome-tailwind-sorter --write --preserve-cursor --cursor-offset ${cursor} ${
 
 **Before:** `<div className="text-white bg-red-500 p-4" />`
 
-**After:** `<div className="p-4 bg-red-500 text-white" />`
+**After:** `<div className="p-4 text-white bg-red-500" />`
 
 ## 📁 Supported File Types
 
