@@ -204,6 +204,9 @@ export function activate(context: vscode.ExtensionContext) {
             const cursorPosition = editor.selection.active;
             
             try {
+                // Capture content before sorting to detect changes
+                const originalContent = document.getText();
+
                 // Show progress for longer operations
                 await vscode.window.withProgress({
                     location: vscode.ProgressLocation.Notification,
@@ -211,11 +214,11 @@ export function activate(context: vscode.ExtensionContext) {
                     cancellable: false
                 }, async (progress) => {
                     progress.report({ increment: 0 });
-                    
+
                     const result = await sorter.sortTailwindClasses(document, true, cursorPosition);
-                    
+
                     progress.report({ increment: 50 });
-                    
+
                     await editor.edit(editBuilder => {
                         const fullRange = new vscode.Range(
                             document.positionAt(0),
@@ -223,9 +226,9 @@ export function activate(context: vscode.ExtensionContext) {
                         );
                         editBuilder.replace(fullRange, result.content);
                     });
-                    
+
                     progress.report({ increment: 100 });
-                    
+
                     // Restore cursor position
                     if (result.newCursorPosition) {
                         editor.selection = new vscode.Selection(
@@ -233,14 +236,12 @@ export function activate(context: vscode.ExtensionContext) {
                             result.newCursorPosition
                         );
                     }
+
+                    // Show success only if something actually changed
+                    if (originalContent !== result.content) {
+                        vscode.window.showInformationMessage('✓ Tailwind classes sorted!');
+                    }
                 });
-                
-                // Only show success message if classes were actually changed
-                const originalContent = document.getText();
-                const newContent = document.getText();
-                if (originalContent !== newContent) {
-                    vscode.window.showInformationMessage('✓ Tailwind classes sorted!');
-                }
             } catch (error) {
                 const errorMessage = error instanceof Error ? error.message : String(error);
                 vscode.window.showErrorMessage(`Failed to sort Tailwind classes: ${errorMessage}`, 'Open Settings')
