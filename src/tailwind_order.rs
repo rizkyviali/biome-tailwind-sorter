@@ -1,5 +1,7 @@
 use phf::phf_map;
 use std::cmp::Ordering;
+use std::sync::LazyLock;
+use regex::Regex;
 
 #[derive(Debug, Clone)]
 pub struct TailwindClass {
@@ -34,30 +36,34 @@ static TAILWIND_ORDER_MAP: phf::Map<&'static str, u32> = phf_map! {
     "contents" => 20,
     "list-item" => 20,
     "hidden" => 20,
-    
+
+    // Overflow
+    "overflow" => 25,
+    "overscroll" => 25,
+
     // Position
     "static" => 30,
     "fixed" => 30,
     "absolute" => 30,
     "relative" => 30,
     "sticky" => 30,
-    
+
     // Top/Right/Bottom/Left
     "inset" => 40,
     "top" => 40,
     "right" => 40,
     "bottom" => 40,
     "left" => 40,
-    
+
     // Visibility
     "visible" => 50,
     "invisible" => 50,
     "collapse" => 50,
-    
+
     // Z-Index
     "z" => 60,
-    
-    // Flex and Grid
+
+    // Flex and Grid — using actual Tailwind class prefixes
     "flex-row" => 70,
     "flex-row-reverse" => 70,
     "flex-col" => 70,
@@ -65,20 +71,25 @@ static TAILWIND_ORDER_MAP: phf::Map<&'static str, u32> = phf_map! {
     "flex-wrap" => 70,
     "flex-wrap-reverse" => 70,
     "flex-nowrap" => 70,
-    "place-content" => 70,
-    "place-items" => 70,
-    "align-content" => 70,
-    "align-items" => 70,
-    "align-self" => 70,
-    "justify-content" => 70,
-    "justify-items" => 70,
-    "justify-self" => 70,
+    "flex-1" => 70,
     "flex-auto" => 70,
     "flex-initial" => 70,
     "flex-none" => 70,
+    "basis" => 70,
     "grow" => 70,
     "shrink" => 70,
     "order" => 70,
+    // Alignment (actual Tailwind prefixes, not CSS property names)
+    "justify" => 70,
+    "justify-items" => 70,
+    "justify-self" => 70,
+    "items" => 70,
+    "self" => 70,
+    "place-content" => 70,
+    "place-items" => 70,
+    "place-self" => 70,
+    "content" => 70,
+    // Grid
     "grid-cols" => 70,
     "col-auto" => 70,
     "col-span" => 70,
@@ -90,7 +101,7 @@ static TAILWIND_ORDER_MAP: phf::Map<&'static str, u32> = phf_map! {
     "row-start" => 70,
     "row-end" => 70,
     "gap" => 70,
-    
+
     // Spacing
     "p" => 80,
     "px" => 80,
@@ -108,7 +119,7 @@ static TAILWIND_ORDER_MAP: phf::Map<&'static str, u32> = phf_map! {
     "ml" => 80,
     "space-x" => 80,
     "space-y" => 80,
-    
+
     // Sizing
     "w" => 90,
     "min-w" => 90,
@@ -116,63 +127,53 @@ static TAILWIND_ORDER_MAP: phf::Map<&'static str, u32> = phf_map! {
     "h" => 90,
     "min-h" => 90,
     "max-h" => 90,
-    
-    // Typography
-    "font-family" => 100,
-    "font-size" => 100,
-    "font-smoothing" => 100,
-    "font-style" => 100,
-    "font-weight" => 100,
-    "font-variant-numeric" => 100,
-    "letter-spacing" => 100,
-    "line-height" => 100,
-    "list-style-image" => 100,
-    "list-style-position" => 100,
-    "list-style-type" => 100,
-    "text-align" => 100,
-    "text-color" => 100,
-    "text-decoration" => 100,
-    "text-decoration-color" => 100,
-    "text-decoration-style" => 100,
-    "text-decoration-thickness" => 100,
-    "text-underline-offset" => 100,
-    "text-transform" => 100,
-    "text-overflow" => 100,
-    "vertical-align" => 100,
+    "size" => 90,
+
+    // Typography — using actual Tailwind class prefixes
+    "font" => 100,
+    "text" => 100,
+    "leading" => 100,
+    "tracking" => 100,
+    "list" => 100,
+    "decoration" => 100,
+    "underline" => 100,
+    "overline" => 100,
+    "line-through" => 100,
+    "no-underline" => 100,
+    "antialiased" => 100,
+    "subpixel-antialiased" => 100,
+    "italic" => 100,
+    "not-italic" => 100,
+    "uppercase" => 100,
+    "lowercase" => 100,
+    "capitalize" => 100,
+    "normal-case" => 100,
+    "truncate" => 100,
     "whitespace" => 100,
-    "word-break" => 100,
+    "break" => 100,
     "hyphens" => 100,
-    "content" => 100,
-    
+    "indent" => 100,
+    "align" => 100,
+
     // Backgrounds
     "bg" => 110,
     "from" => 110,
     "via" => 110,
     "to" => 110,
-    "bg-attachment" => 110,
-    "bg-clip" => 110,
-    "bg-origin" => 110,
-    "bg-position" => 110,
-    "bg-repeat" => 110,
-    "bg-size" => 110,
-    "bg-image" => 110,
-    
+
     // Borders
     "border" => 120,
-    "border-collapse" => 120,
-    "border-spacing" => 120,
-    "table-layout" => 120,
-    "border-style" => 120,
     "divide" => 120,
     "outline" => 120,
     "ring" => 120,
-    
+    "rounded" => 120,
+
     // Effects
     "shadow" => 130,
     "opacity" => 130,
-    "mix-blend-mode" => 130,
-    "bg-blend-mode" => 130,
-    
+    "mix-blend" => 130,
+    "bg-blend" => 130,
+
     // Filters
     "filter" => 140,
     "blur" => 140,
@@ -184,64 +185,57 @@ static TAILWIND_ORDER_MAP: phf::Map<&'static str, u32> = phf_map! {
     "invert" => 140,
     "saturate" => 140,
     "sepia" => 140,
-    "backdrop-filter" => 140,
-    "backdrop-blur" => 140,
-    "backdrop-brightness" => 140,
-    "backdrop-contrast" => 140,
-    "backdrop-grayscale" => 140,
-    "backdrop-hue-rotate" => 140,
-    "backdrop-invert" => 140,
-    "backdrop-opacity" => 140,
-    "backdrop-saturate" => 140,
-    "backdrop-sepia" => 140,
-    
-    // Tables
-    "caption-side" => 150,
-    "empty-cells" => 150,
-    
+    "backdrop" => 140,
+
     // Transitions and Animation
     "transition" => 160,
     "duration" => 160,
     "ease" => 160,
     "delay" => 160,
     "animate" => 160,
-    
+
     // Transforms
     "transform" => 170,
-    "transform-origin" => 170,
+    "origin" => 170,
     "scale" => 170,
     "rotate" => 170,
     "translate" => 170,
     "skew" => 170,
-    
+
     // Interactivity
-    "accent-color" => 180,
+    "accent" => 180,
     "appearance" => 180,
     "cursor" => 180,
-    "caret-color" => 180,
+    "caret" => 180,
     "pointer-events" => 180,
     "resize" => 180,
-    "scroll-behavior" => 180,
-    "scroll-margin" => 180,
-    "scroll-padding" => 180,
-    "scroll-snap-align" => 180,
-    "scroll-snap-stop" => 180,
-    "scroll-snap-type" => 180,
-    "touch-action" => 180,
-    "user-select" => 180,
+    "scroll" => 180,
+    "snap" => 180,
+    "touch" => 180,
+    "select" => 180,
     "will-change" => 180,
-    
+
     // SVG
     "fill" => 190,
     "stroke" => 190,
-    
+
     // Accessibility
     "sr-only" => 200,
     "not-sr-only" => 200,
-    
+
     // Official
     "forced-color-adjust" => 210,
 };
+
+static ARBITRARY_VALUE_REGEX: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"\[.*?\]$").unwrap()
+});
+static NUMERIC_SUFFIX_REGEX: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"-\d+(\.\d+)?$").unwrap()
+});
+static ALPHA_SUFFIX_REGEX: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"-[a-z]+$").unwrap()
+});
 
 pub fn parse_tailwind_class(class_name: &str) -> TailwindClass {
     let parts: Vec<&str> = class_name.split(':').collect();
@@ -251,22 +245,16 @@ pub fn parse_tailwind_class(class_name: &str) -> TailwindClass {
     } else {
         None
     };
-    
-    // Handle arbitrary values like w-[100px]
-    let base_class = regex::Regex::new(r"\[.*?\]$")
-        .unwrap()
-        .replace(actual_class, "");
-    
-    // Handle numeric suffixes like p-4, text-lg, etc.
-    let base_pattern = regex::Regex::new(r"-\d+(\.\d+)?$")
-        .unwrap()
-        .replace(&base_class, "");
-    let base_pattern = regex::Regex::new(r"-[a-z]+$")
-        .unwrap()
-        .replace(&base_pattern, "");
-    
-    let order = get_class_order(&base_pattern, actual_class);
-    
+
+    // Strip arbitrary values like w-[100px]
+    let base_class = ARBITRARY_VALUE_REGEX.replace(actual_class, "");
+    // Strip numeric suffix like -4, -500
+    let base_pattern = NUMERIC_SUFFIX_REGEX.replace(base_class.as_ref(), "");
+    // Strip alphabetic suffix like -red, -lg
+    let base_pattern = ALPHA_SUFFIX_REGEX.replace(base_pattern.as_ref(), "");
+
+    let order = get_class_order(base_pattern.as_ref(), actual_class);
+
     TailwindClass {
         name: class_name.to_string(),
         order,
@@ -279,65 +267,28 @@ fn get_class_order(base_pattern: &str, full_class: &str) -> u32 {
     if let Some(&order) = TAILWIND_ORDER_MAP.get(full_class) {
         return order;
     }
-    
-    // Check base pattern
+
+    // flex-{number} (e.g. flex-1, flex-2) is a flex-shorthand utility, not display:flex
+    if full_class.starts_with("flex-") && base_pattern == "flex" {
+        let suffix = &full_class[5..];
+        if !suffix.is_empty() && suffix.chars().all(|c| c.is_ascii_digit() || c == '.') {
+            return 70;
+        }
+    }
+
+    // Check base pattern in the map
     if let Some(&order) = TAILWIND_ORDER_MAP.get(base_pattern) {
         return order;
     }
-    
-    // Check for common patterns
+
+    // Prefix-based fallback scan (handles multi-segment prefixes like "grid-cols")
     for (pattern, &order) in TAILWIND_ORDER_MAP.entries() {
         if full_class.starts_with(&format!("{pattern}-")) || full_class == *pattern {
             return order;
         }
     }
-    
-    // Handle special cases
-    if full_class.starts_with("text-") {
-        if regex::Regex::new(r"^text-(xs|sm|base|lg|xl|\d+xl)$")
-            .unwrap()
-            .is_match(full_class)
-        {
-            return 100; // font-size
-        }
-        if regex::Regex::new(r"^text-(left|center|right|justify|start|end)$")
-            .unwrap()
-            .is_match(full_class)
-        {
-            return 100; // text-align
-        }
-        return 100; // text-color by default
-    }
-    
-    if full_class.starts_with("bg-") {
-        return 110;
-    }
-    
-    if full_class.starts_with("border-") {
-        return 120;
-    }
-    
-    if full_class.starts_with("rounded") {
-        return 120;
-    }
-    
-    if full_class.starts_with("shadow") {
-        return 130;
-    }
-    
-    if full_class.starts_with("font-") {
-        return 100;
-    }
-    
-    if full_class.starts_with("transition") {
-        return 160;
-    }
-    
-    if full_class.starts_with("duration") {
-        return 160;
-    }
-    
-    // Default to high number for unknown classes
+
+    // Default to high number for unknown / custom classes
     999
 }
 
