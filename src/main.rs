@@ -5,6 +5,7 @@ mod config;
 
 use clap::{Arg, Command};
 use formatter::{TailwindFormatter, CursorPosition};
+use ignore::WalkBuilder;
 use std::fs;
 use std::io::{self, Read, Write};
 use std::path::Path;
@@ -406,47 +407,57 @@ fn process_file(
 
 fn get_files(patterns: &[&String]) -> Vec<String> {
     let mut files = Vec::new();
-    
-    for pattern in patterns {
-        match fs::metadata(pattern) {
-            Ok(metadata) => {
-                if metadata.is_file() {
-                    if should_process_file(pattern) {
-                        files.push(pattern.to_string());
-                    }
-                } else if metadata.is_dir() {
-                    // Recursive directory traversal
-                    collect_files_recursively(pattern, &mut files);
-                }
-            }
-            Err(_) => {
-                eprintln!("Warning: Cannot access path '{pattern}'");
-            }
-        }
-    }
-    
-    files
-}
 
-fn collect_files_recursively(dir_path: &str, files: &mut Vec<String>) {
-    if let Ok(entries) = fs::read_dir(dir_path) {
-        for entry in entries.flatten() {
-            let path = entry.path();
-            if let Some(path_str) = path.to_str() {
-                if path.is_file() {
-                    if should_process_file(path_str) {
-                        files.push(path_str.to_string());
+    for pattern in patterns {
+        let path = Path::new(pattern);
+        if !path.exists() {
+            eprintln!("Warning: Cannot access path '{pattern}'");
+            continue;
+        }
+
+        if path.is_file() {
+            if should_process_file(pattern) {
+                files.push(pattern.to_string());
+            }
+        } else {
+            // Check if the directory itself should be ignored based on our safety filter
+            if let Some(dir_name) = path.file_name().and_then(|n| n.to_str()) {
+                if should_ignore_directory(dir_name) {
+                    continue;
+                }
+            }
+
+            // Use ignore crate for directory traversal (respects .gitignore and .ignore files)
+            let walker = WalkBuilder::new(pattern)
+                .hidden(true)
+                .git_ignore(true)
+                .ignore(true)
+                .parents(true)
+                .filter_entry(|entry| {
+                    let file_name = entry.file_name().to_str().unwrap_or("");
+                    !should_ignore_directory(file_name)
+                })
+                .build();
+
+            for result in walker {
+                match result {
+                    Ok(entry) => {
+                        let path = entry.path();
+                        if path.is_file() {
+                            if let Some(path_str) = path.to_str() {
+                                if should_process_file(path_str) {
+                                    files.push(path_str.to_string());
+                                }
+                            }
+                        }
                     }
-                } else if path.is_dir() {
-                    // Skip common directories that should be ignored
-                    let dir_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-                    if !should_ignore_directory(dir_name) {
-                        collect_files_recursively(path_str, files);
-                    }
+                    Err(err) => eprintln!("Error traversing directory: {err}"),
                 }
             }
         }
     }
+
+    files
 }
 
 fn should_ignore_directory(dir_name: &str) -> bool {
