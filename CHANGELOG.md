@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.11] - 2026-04-16
+
+### Added
+- `.gitignore` and `.ignore` file support — directory traversal now automatically respects ignore rules via the `ignore` crate
+
+### Fixed
+- CI integration test exit code handling with `bash -e`
+- Clippy warnings: `unnecessary_sort_by`, `uninlined_format_args`, `field_reassign_with_default`, `unnecessary_to_owned`
+- Rust formatting issues across multiple files
+
+## [0.2.9] - 2026-04-06
+
+### Added
+- `.gitignore` file exclusions for `target/` build artifacts
+
+### Fixed
+- Multiline class string reconstruction with better indentation
+- Improved Tailwind class ordering with better prefix matching
+- Success message now only shows when content actually changes
+
 ## [0.2.8] - 2025-08-20
 
 ### Added

@@ -13,7 +13,7 @@ use std::process;
 
 fn main() {
     let matches = Command::new("biome-tailwind-sorter")
-        .version("0.2.9")
+        .version("0.2.11")
         .about("A high-performance Rust CLI tool for sorting Tailwind CSS classes according to official order")
         .arg(
             Arg::new("files")

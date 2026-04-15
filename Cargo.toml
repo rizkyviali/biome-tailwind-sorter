@@ -1,6 +1,6 @@
 [package]
 name = "biome-tailwind-sorter"
-version = "0.2.9"
+version = "0.2.11"
 edition = "2021"
 description = "A high-performance Rust CLI tool for sorting Tailwind CSS classes according to official order"
 authors = ["Rizky Viali"]
