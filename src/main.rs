@@ -315,7 +315,7 @@ fn run_doctor_check(debug: bool) {
 
     // Performance test
     println!("\n⚡ Performance Test:");
-    let large_test = format!("{} ", test_html).repeat(1000);
+    let large_test = format!("{test_html} ").repeat(1000);
     let start = std::time::Instant::now();
     let _result = formatter.format_document(&large_test, None);
     let duration = start.elapsed();

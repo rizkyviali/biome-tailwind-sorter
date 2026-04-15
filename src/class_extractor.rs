@@ -73,7 +73,7 @@ pub fn reconstruct_class_string(
 
     // Each sorted class on its own indented line
     for class in class_names {
-        result.push(format!("{}{}", indent, class));
+        result.push(format!("{indent}{class}"));
     }
 
     // Preserve trailing blank/whitespace lines (e.g. the indent before the closing `"`)

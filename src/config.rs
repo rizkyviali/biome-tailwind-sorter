@@ -346,8 +346,10 @@ mod tests {
 
     #[test]
     fn test_is_custom_class() {
-        let mut config = Config::default();
-        config.custom_classes = vec!["my-custom".to_string(), "another-custom".to_string()];
+        let config = Config {
+            custom_classes: vec!["my-custom".to_string(), "another-custom".to_string()],
+            ..Default::default()
+        };
 
         assert!(config.is_custom_class("my-custom"));
         assert!(config.is_custom_class("another-custom"));
