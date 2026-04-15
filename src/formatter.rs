@@ -100,7 +100,7 @@ impl TailwindFormatter {
         }
 
         // Sort matches by start position
-        matches.sort_by(|a, b| a.start.cmp(&b.start));
+        matches.sort_by_key(|a| a.start);
 
         // Process matches in reverse order to maintain correct offsets
         for class_match in matches.into_iter().rev() {
