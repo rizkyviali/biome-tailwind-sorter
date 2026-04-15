@@ -66,8 +66,9 @@ jobs:
     - name: Test CLI basic functionality
       run: |
         echo '<div class="text-red-500 p-4 flex">test</div>' > test.html
-        ./target/release/biome-tailwind-sorter --check test.html
-        if [ $? -ne 1 ]; then echo "Expected exit code 1"; exit 1; fi
+        EXIT_CODE=0
+        ./target/release/biome-tailwind-sorter --check test.html || EXIT_CODE=$?
+        if [ $EXIT_CODE -ne 1 ]; then echo "Expected exit code 1, got $EXIT_CODE"; exit 1; fi
         
     - name: Test CLI write functionality
       run: |
