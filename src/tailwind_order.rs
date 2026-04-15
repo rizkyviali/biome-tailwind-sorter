@@ -1,7 +1,7 @@
 use phf::phf_map;
+use regex::Regex;
 use std::cmp::Ordering;
 use std::sync::LazyLock;
-use regex::Regex;
 
 #[derive(Debug, Clone)]
 pub struct TailwindClass {
@@ -227,15 +227,10 @@ static TAILWIND_ORDER_MAP: phf::Map<&'static str, u32> = phf_map! {
     "forced-color-adjust" => 210,
 };
 
-static ARBITRARY_VALUE_REGEX: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"\[.*?\]$").unwrap()
-});
-static NUMERIC_SUFFIX_REGEX: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"-\d+(\.\d+)?$").unwrap()
-});
-static ALPHA_SUFFIX_REGEX: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"-[a-z]+$").unwrap()
-});
+static ARBITRARY_VALUE_REGEX: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\[.*?\]$").unwrap());
+static NUMERIC_SUFFIX_REGEX: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"-\d+(\.\d+)?$").unwrap());
+static ALPHA_SUFFIX_REGEX: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"-[a-z]+$").unwrap());
 
 pub fn parse_tailwind_class(class_name: &str) -> TailwindClass {
     let parts: Vec<&str> = class_name.split(':').collect();
@@ -298,11 +293,9 @@ fn get_responsive_order(modifier: &str) -> Option<usize> {
 }
 
 pub fn sort_tailwind_classes(classes: &[String]) -> Vec<String> {
-    let mut parsed_classes: Vec<TailwindClass> = classes
-        .iter()
-        .map(|c| parse_tailwind_class(c))
-        .collect();
-    
+    let mut parsed_classes: Vec<TailwindClass> =
+        classes.iter().map(|c| parse_tailwind_class(c)).collect();
+
     parsed_classes.sort_by(|a, b| {
         // First sort by order
         match a.order.cmp(&b.order) {
@@ -310,13 +303,16 @@ pub fn sort_tailwind_classes(classes: &[String]) -> Vec<String> {
                 // Then by modifier (responsive, pseudo-classes, etc.)
                 let a_modifier = a.modifier.as_deref().unwrap_or("");
                 let b_modifier = b.modifier.as_deref().unwrap_or("");
-                
+
                 match (a_modifier.is_empty(), b_modifier.is_empty()) {
-                    (true, false) => Ordering::Less,   // Base classes first
+                    (true, false) => Ordering::Less, // Base classes first
                     (false, true) => Ordering::Greater,
                     (true, true) | (false, false) => {
                         // Sort responsive modifiers in order: sm, md, lg, xl, 2xl
-                        match (get_responsive_order(a_modifier), get_responsive_order(b_modifier)) {
+                        match (
+                            get_responsive_order(a_modifier),
+                            get_responsive_order(b_modifier),
+                        ) {
                             (Some(a_resp), Some(b_resp)) => a_resp.cmp(&b_resp),
                             _ => a_modifier.cmp(b_modifier),
                         }
@@ -327,10 +323,9 @@ pub fn sort_tailwind_classes(classes: &[String]) -> Vec<String> {
             other => other,
         }
     });
-    
+
     parsed_classes.into_iter().map(|c| c.name).collect()
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -363,6 +358,9 @@ mod tests {
             "text-red-500".to_string(),
         ];
         let sorted = sort_tailwind_classes(&classes);
-        assert_eq!(sorted, vec!["text-red-500", "md:text-red-500", "lg:text-red-500"]);
+        assert_eq!(
+            sorted,
+            vec!["text-red-500", "md:text-red-500", "lg:text-red-500"]
+        );
     }
 }

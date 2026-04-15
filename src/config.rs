@@ -8,31 +8,31 @@ pub struct Config {
     /// Custom class order (overrides default Tailwind order)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_order: Option<Vec<String>>,
-    
+
     /// File extensions to process
     #[serde(default = "default_extensions")]
     pub extensions: Vec<String>,
-    
+
     /// Whether to preserve multiline formatting
     #[serde(default = "default_preserve_multiline")]
     pub preserve_multiline: bool,
-    
+
     /// Directories/files to ignore
     #[serde(default)]
     pub ignore: Vec<String>,
-    
+
     /// Whether to process files recursively in directories
     #[serde(default = "default_recursive")]
     pub recursive: bool,
-    
+
     /// Maximum file size to process (in bytes)
     #[serde(default = "default_max_file_size")]
     pub max_file_size: usize,
-    
+
     /// Additional custom classes that should be treated as Tailwind classes
     #[serde(default)]
     pub custom_classes: Vec<String>,
-    
+
     /// Whether to sort custom classes
     #[serde(default = "default_sort_custom_classes")]
     pub sort_custom_classes: bool,
@@ -92,7 +92,7 @@ impl Config {
     #[allow(dead_code)]
     pub fn load_from_file<P: AsRef<Path>>(path: P) -> Result<Config, Box<dyn std::error::Error>> {
         let content = fs::read_to_string(path)?;
-        
+
         // Try JSON first, then TOML
         if let Ok(config) = serde_json::from_str::<Config>(&content) {
             Ok(config)
@@ -101,7 +101,7 @@ impl Config {
             Err("Only JSON configuration is currently supported".into())
         }
     }
-    
+
     /// Find and load configuration from common locations
     #[allow(dead_code)]
     pub fn load() -> Config {
@@ -111,13 +111,13 @@ impl Config {
             "tailwindsorter.config.json",
             "biome-tailwind-sorter.json",
         ];
-        
+
         for config_file in &config_files {
             if let Ok(config) = Self::load_from_file(config_file) {
                 return config;
             }
         }
-        
+
         // Try package.json
         if let Ok(package_json) = fs::read_to_string("package.json") {
             if let Ok(package_data) = serde_json::from_str::<serde_json::Value>(&package_json) {
@@ -128,7 +128,7 @@ impl Config {
                 }
             }
         }
-        
+
         // Try tailwind.config.js basic detection
         let mut config = Config::default();
         if let Some(tailwind_config) = Self::detect_tailwind_config() {
@@ -161,10 +161,10 @@ impl Config {
                 }
             }
         }
-        
+
         config
     }
-    
+
     /// Detect and parse basic tailwind.config.js information
     #[allow(dead_code)]
     fn detect_tailwind_config() -> Option<Value> {
@@ -174,7 +174,7 @@ impl Config {
             "tailwind.config.ts",
             "tailwind.config.json",
         ];
-        
+
         for config_file in &config_files {
             if let Ok(content) = fs::read_to_string(config_file) {
                 // For JSON files, try direct parsing
@@ -184,17 +184,17 @@ impl Config {
                     }
                     continue;
                 }
-                
+
                 // For JS/TS files, do basic parsing to extract content array
                 if let Some(config) = Self::parse_js_config(&content) {
                     return Some(config);
                 }
             }
         }
-        
+
         None
     }
-    
+
     /// Basic parser for JavaScript/TypeScript config files
     #[allow(dead_code)]
     fn parse_js_config(content: &str) -> Option<Value> {
@@ -205,14 +205,14 @@ impl Config {
                 let after_array_start = &after_content[array_start..];
                 if let Some(array_end) = after_array_start.find(']') {
                     let array_content = &after_array_start[1..array_end];
-                    
+
                     // Extract quoted strings
                     let mut content_patterns = Vec::new();
                     let mut in_quote = false;
                     let mut quote_char = '"';
                     let mut current_string = String::new();
                     let chars = array_content.chars();
-                    
+
                     for ch in chars {
                         if !in_quote && (ch == '"' || ch == '\'') {
                             in_quote = true;
@@ -227,7 +227,7 @@ impl Config {
                             current_string.push(ch);
                         }
                     }
-                    
+
                     if !content_patterns.is_empty() {
                         let mut config = serde_json::Map::new();
                         config.insert("content".to_string(), Value::Array(content_patterns));
@@ -236,10 +236,10 @@ impl Config {
                 }
             }
         }
-        
+
         None
     }
-    
+
     /// Save configuration to a file
     #[allow(dead_code)]
     pub fn save_to_file<P: AsRef<Path>>(&self, path: P) -> Result<(), Box<dyn std::error::Error>> {
@@ -247,7 +247,7 @@ impl Config {
         fs::write(path, content)?;
         Ok(())
     }
-    
+
     /// Check if a file should be processed based on extension
     #[allow(dead_code)]
     pub fn should_process_file(&self, file_path: &str) -> bool {
@@ -258,7 +258,7 @@ impl Config {
         }
         false
     }
-    
+
     /// Check if a path should be ignored
     #[allow(dead_code)]
     pub fn should_ignore_path(&self, path: &str) -> bool {
@@ -267,25 +267,27 @@ impl Config {
             path.contains(ignore_pattern)
         })
     }
-    
+
     /// Get the custom class order if defined
     #[allow(dead_code)]
     pub fn get_custom_order(&self) -> Option<&[String]> {
         self.custom_order.as_deref()
     }
-    
+
     /// Check if a class is considered a custom class
     #[allow(dead_code)]
     pub fn is_custom_class(&self, class_name: &str) -> bool {
-        self.custom_classes.iter().any(|custom| custom == class_name)
+        self.custom_classes
+            .iter()
+            .any(|custom| custom == class_name)
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tempfile::NamedTempFile;
     use std::io::Write;
+    use tempfile::NamedTempFile;
 
     #[test]
     fn test_default_config() {
@@ -301,7 +303,7 @@ mod tests {
         let config = Config::default();
         let json = serde_json::to_string(&config).unwrap();
         let deserialized: Config = serde_json::from_str(&json).unwrap();
-        
+
         assert_eq!(config.extensions, deserialized.extensions);
         assert_eq!(config.preserve_multiline, deserialized.preserve_multiline);
     }
@@ -316,8 +318,9 @@ mod tests {
                 "preserve_multiline": false,
                 "custom_classes": ["my-custom-class"]
             }}"#
-        ).unwrap();
-        
+        )
+        .unwrap();
+
         let config = Config::load_from_file(temp_file.path()).unwrap();
         assert_eq!(config.extensions, vec!["html", "jsx"]);
         assert!(!config.preserve_multiline);
@@ -345,7 +348,7 @@ mod tests {
     fn test_is_custom_class() {
         let mut config = Config::default();
         config.custom_classes = vec!["my-custom".to_string(), "another-custom".to_string()];
-        
+
         assert!(config.is_custom_class("my-custom"));
         assert!(config.is_custom_class("another-custom"));
         assert!(!config.is_custom_class("text-red-500"));

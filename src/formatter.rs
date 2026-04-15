@@ -1,5 +1,5 @@
 use crate::class_extractor::{
-    extract_class_names, reconstruct_class_string, contains_tailwind_classes,
+    contains_tailwind_classes, extract_class_names, reconstruct_class_string,
 };
 use crate::tailwind_order::sort_tailwind_classes;
 use regex::Regex;
@@ -37,15 +37,17 @@ impl TailwindFormatter {
         Self { preserve_cursor }
     }
 
-    pub fn format_document(&self, source: &str, cursor_pos: Option<CursorPosition>) -> FormatResult {
+    pub fn format_document(
+        &self,
+        source: &str,
+        cursor_pos: Option<CursorPosition>,
+    ) -> FormatResult {
         // Pre-compiled regexes for better performance
-        static DOUBLE_QUOTE_REGEX: LazyLock<Regex> = LazyLock::new(|| {
-            Regex::new(r#"(class(?:Name)?=")([^"]*?)""#).unwrap()
-        });
-        static SINGLE_QUOTE_REGEX: LazyLock<Regex> = LazyLock::new(|| {
-            Regex::new(r#"(class(?:Name)?=')([^']*?)'"#).unwrap()
-        });
-        
+        static DOUBLE_QUOTE_REGEX: LazyLock<Regex> =
+            LazyLock::new(|| Regex::new(r#"(class(?:Name)?=")([^"]*?)""#).unwrap());
+        static SINGLE_QUOTE_REGEX: LazyLock<Regex> =
+            LazyLock::new(|| Regex::new(r#"(class(?:Name)?=')([^']*?)'"#).unwrap());
+
         // Early exit if no class attributes are found
         if !source.contains("class") {
             return FormatResult {
@@ -54,7 +56,7 @@ impl TailwindFormatter {
                 changed: false,
             };
         }
-        
+
         let double_quote_regex = &*DOUBLE_QUOTE_REGEX;
         let single_quote_regex = &*SINGLE_QUOTE_REGEX;
         let mut result = source.to_string();
@@ -64,7 +66,7 @@ impl TailwindFormatter {
 
         // Find all class matches and collect them
         let mut matches: Vec<ClassMatch> = Vec::new();
-        
+
         // Find double-quoted class attributes
         for m in double_quote_regex.find_iter(source) {
             if let Some(captures) = double_quote_regex.captures(m.as_str()) {
@@ -80,7 +82,7 @@ impl TailwindFormatter {
                 });
             }
         }
-        
+
         // Find single-quoted class attributes
         for m in single_quote_regex.find_iter(source) {
             if let Some(captures) = single_quote_regex.captures(m.as_str()) {
@@ -96,21 +98,21 @@ impl TailwindFormatter {
                 });
             }
         }
-        
+
         // Sort matches by start position
         matches.sort_by(|a, b| a.start.cmp(&b.start));
 
         // Process matches in reverse order to maintain correct offsets
         for class_match in matches.into_iter().rev() {
             let class_names = extract_class_names(&class_match.classes);
-            
+
             // Skip if no classes or no tailwind classes found
             if class_names.is_empty() || !contains_tailwind_classes(&class_names) {
                 continue;
             }
 
             let sorted_classes = sort_tailwind_classes(&class_names);
-            
+
             // Check if sorting is needed (avoid unnecessary string operations)
             if class_names == sorted_classes {
                 continue;
@@ -119,14 +121,12 @@ impl TailwindFormatter {
             let sorted_class_string = reconstruct_class_string(
                 &sorted_classes,
                 &class_match.classes,
-                class_match.classes.contains('\n')
+                class_match.classes.contains('\n'),
             );
 
             let new_attribute = format!(
                 "{}{}{}",
-                class_match.prefix,
-                sorted_class_string,
-                class_match.suffix
+                class_match.prefix, sorted_class_string, class_match.suffix
             );
 
             // Calculate the difference in length
@@ -149,9 +149,9 @@ impl TailwindFormatter {
             // Replace the text
             let adjusted_start = (class_match.start as i32 + offset_adjustment) as usize;
             let adjusted_end = (class_match.end as i32 + offset_adjustment) as usize;
-            
+
             result.replace_range(adjusted_start..adjusted_end, &new_attribute);
-            
+
             offset_adjustment += length_diff;
             changed = true;
         }
@@ -195,8 +195,10 @@ impl TailwindFormatter {
 
         // Cursor is within the match - try to preserve relative position
         let relative_pos = cursor_offset - adjusted_match_start;
-        let class_content_start = original_classes.find(|c: char| !c.is_whitespace()).unwrap_or(0);
-        
+        let class_content_start = original_classes
+            .find(|c: char| !c.is_whitespace())
+            .unwrap_or(0);
+
         // If cursor is in the prefix (class= part), keep it there
         if relative_pos < class_content_start {
             return cursor_offset;
@@ -205,7 +207,7 @@ impl TailwindFormatter {
         // Try to map cursor position within the class content
         let original_class_names = extract_class_names(original_classes);
         let sorted_class_names = sort_tailwind_classes(&original_class_names);
-        
+
         // Find which class the cursor was closest to
         let cursor_class_index = self.find_closest_class_index(
             &original_class_names,
@@ -237,20 +239,20 @@ impl TailwindFormatter {
         cursor_pos: usize,
     ) -> Option<usize> {
         let mut current_pos = 0;
-        
+
         for (index, class_name) in class_names.iter().enumerate() {
             if let Some(class_start) = class_string[current_pos..].find(class_name) {
                 let absolute_start = current_pos + class_start;
                 let absolute_end = absolute_start + class_name.len();
-                
+
                 if cursor_pos >= absolute_start && cursor_pos <= absolute_end {
                     return Some(index);
                 }
-                
+
                 current_pos = absolute_end;
             }
         }
-        
+
         None
     }
 
@@ -312,7 +314,7 @@ mod tests {
             column: 25, // In the middle of the class attribute
             offset: 25,
         };
-        
+
         let result = formatter.format_document(input, Some(cursor));
         assert!(result.changed);
         assert!(result.cursor_position.is_some());

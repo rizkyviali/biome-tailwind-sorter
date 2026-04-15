@@ -42,15 +42,24 @@ pub fn reconstruct_class_string(
     }
 
     // Find the indentation from the first non-empty content line
-    let indent = lines.iter()
+    let indent = lines
+        .iter()
         .find(|l| !l.trim().is_empty())
-        .map(|l| l.chars().take_while(|c| c.is_whitespace()).collect::<String>())
+        .map(|l| {
+            l.chars()
+                .take_while(|c| c.is_whitespace())
+                .collect::<String>()
+        })
         .unwrap_or_default();
 
     // Count leading and trailing empty-only lines to preserve them
     let leading_count = lines.iter().take_while(|l| l.trim().is_empty()).count();
     let trailing_count = if lines.len() > leading_count {
-        lines.iter().rev().take_while(|l| l.trim().is_empty()).count()
+        lines
+            .iter()
+            .rev()
+            .take_while(|l| l.trim().is_empty())
+            .count()
     } else {
         0
     };
@@ -77,22 +86,32 @@ pub fn reconstruct_class_string(
 }
 
 #[allow(dead_code)]
-pub fn parse_class_attribute(attribute_value: &str, attribute_name: &str) -> Option<ClassAttribute> {
+pub fn parse_class_attribute(
+    attribute_value: &str,
+    attribute_name: &str,
+) -> Option<ClassAttribute> {
     if !matches!(attribute_name, "class" | "className") {
         return None;
     }
-    
+
     // Determine quote type and clean value
-    let (quotes, clean_value) = if attribute_value.starts_with('"') && attribute_value.ends_with('"') {
-        (QuoteType::Double, &attribute_value[1..attribute_value.len() - 1])
-    } else if attribute_value.starts_with('\'') && attribute_value.ends_with('\'') {
-        (QuoteType::Single, &attribute_value[1..attribute_value.len() - 1])
-    } else {
-        (QuoteType::None, attribute_value)
-    };
-    
+    let (quotes, clean_value) =
+        if attribute_value.starts_with('"') && attribute_value.ends_with('"') {
+            (
+                QuoteType::Double,
+                &attribute_value[1..attribute_value.len() - 1],
+            )
+        } else if attribute_value.starts_with('\'') && attribute_value.ends_with('\'') {
+            (
+                QuoteType::Single,
+                &attribute_value[1..attribute_value.len() - 1],
+            )
+        } else {
+            (QuoteType::None, attribute_value)
+        };
+
     let is_multiline = clean_value.contains('\n') || clean_value.contains("\\n");
-    
+
     Some(ClassAttribute {
         value: clean_value.to_string(),
         _start_pos: 0, // Will be set by the caller
@@ -120,8 +139,9 @@ static TAILWIND_REGEX_PATTERNS: LazyLock<Vec<Regex>> = LazyLock::new(|| {
         r"^justify-",
         r"^items-",
     ];
-    
-    patterns.iter()
+
+    patterns
+        .iter()
         .map(|pattern| Regex::new(pattern).unwrap())
         .collect()
 });
@@ -129,24 +149,38 @@ static TAILWIND_REGEX_PATTERNS: LazyLock<Vec<Regex>> = LazyLock::new(|| {
 pub fn is_tailwind_class(class_name: &str) -> bool {
     // Check if it's a known exact Tailwind class first
     let exact_tailwind_classes = [
-        "container", "flex", "grid", "block", "inline", "hidden", "visible", "invisible",
-        "absolute", "relative", "fixed", "static", "sticky"
+        "container",
+        "flex",
+        "grid",
+        "block",
+        "inline",
+        "hidden",
+        "visible",
+        "invisible",
+        "absolute",
+        "relative",
+        "fixed",
+        "static",
+        "sticky",
     ];
-    
+
     // Remove modifiers to get base class
     let base_class = class_name.split(':').next_back().unwrap_or("");
-    
+
     if exact_tailwind_classes.contains(&base_class) {
         return true;
     }
-    
+
     // Use pre-compiled regex patterns
-    TAILWIND_REGEX_PATTERNS.iter().any(|regex| regex.is_match(class_name))
+    TAILWIND_REGEX_PATTERNS
+        .iter()
+        .any(|regex| regex.is_match(class_name))
 }
 
-
 pub fn contains_tailwind_classes(class_names: &[String]) -> bool {
-    class_names.iter().any(|class_name| is_tailwind_class(class_name))
+    class_names
+        .iter()
+        .any(|class_name| is_tailwind_class(class_name))
 }
 
 #[cfg(test)]
@@ -201,11 +235,8 @@ mod tests {
             "another-custom".to_string(),
         ];
         assert!(contains_tailwind_classes(&classes));
-        
-        let no_tailwind = vec![
-            "custom-class".to_string(),
-            "another-custom".to_string(),
-        ];
+
+        let no_tailwind = vec!["custom-class".to_string(), "another-custom".to_string()];
         assert!(!contains_tailwind_classes(&no_tailwind));
     }
 
@@ -227,7 +258,7 @@ mod tests {
         ];
         let original = "  items-center\n  justify-between\n  flex\n  p-4";
         let result = reconstruct_class_string(&classes, original, true);
-        
+
         // Should preserve indentation and distribute classes
         assert!(result.contains("  flex"));
         assert!(result.contains('\n'));

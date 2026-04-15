@@ -1,10 +1,10 @@
-mod tailwind_order;
 mod class_extractor;
-mod formatter;
 mod config;
+mod formatter;
+mod tailwind_order;
 
 use clap::{Arg, Command};
-use formatter::{TailwindFormatter, CursorPosition};
+use formatter::{CursorPosition, TailwindFormatter};
 use ignore::WalkBuilder;
 use std::fs;
 use std::io::{self, Read, Write};
@@ -90,7 +90,10 @@ fn main() {
         )
         .get_matches();
 
-    let files: Vec<&String> = matches.get_many::<String>("files").map(|f| f.collect()).unwrap_or_default();
+    let files: Vec<&String> = matches
+        .get_many::<String>("files")
+        .map(|f| f.collect())
+        .unwrap_or_default();
     let write = matches.get_flag("write");
     let check = matches.get_flag("check");
     let verbose = matches.get_flag("verbose");
@@ -104,7 +107,7 @@ fn main() {
         let line = matches.get_one::<usize>("cursor-line").copied();
         let column = matches.get_one::<usize>("cursor-column").copied();
         let offset = matches.get_one::<usize>("cursor-offset").copied();
-        
+
         match (line, column, offset) {
             (Some(line), Some(column), Some(offset)) => Some(CursorPosition {
                 line,
@@ -112,7 +115,7 @@ fn main() {
                 offset,
             }),
             (None, None, Some(offset)) => Some(CursorPosition {
-                line: 0, // Will be calculated
+                line: 0,   // Will be calculated
                 column: 0, // Will be calculated
                 offset,
             }),
@@ -133,11 +136,18 @@ fn main() {
         if debug {
             eprintln!("Debug: Processing stdin input");
             if let Some(ref cursor) = cursor_position {
-                eprintln!("Debug: Cursor position - line: {}, column: {}, offset: {}", 
-                         cursor.line, cursor.column, cursor.offset);
+                eprintln!(
+                    "Debug: Cursor position - line: {}, column: {}, offset: {}",
+                    cursor.line, cursor.column, cursor.offset
+                );
             }
         }
-        if let Err(err) = process_stdin(&TailwindFormatter::new(preserve_cursor), cursor_position, write, debug) {
+        if let Err(err) = process_stdin(
+            &TailwindFormatter::new(preserve_cursor),
+            cursor_position,
+            write,
+            debug,
+        ) {
             eprintln!("Error processing stdin: {err}");
             if debug {
                 eprintln!("Debug: Error details - {err:#?}");
@@ -148,7 +158,7 @@ fn main() {
     }
 
     let expanded_files = get_files(&files);
-    
+
     if expanded_files.is_empty() {
         eprintln!("Error: No supported files found in the specified paths.");
         eprintln!("Supported extensions: .js, .jsx, .ts, .tsx, .html, .vue, .astro");
@@ -168,7 +178,14 @@ fn main() {
     }
 
     for file_path in &expanded_files {
-        match process_file(&formatter, file_path, write, verbose || debug, cursor_position.clone(), max_size_mb) {
+        match process_file(
+            &formatter,
+            file_path,
+            write,
+            verbose || debug,
+            cursor_position.clone(),
+            max_size_mb,
+        ) {
             Ok(changed) => {
                 if changed {
                     changed_files += 1;
@@ -187,9 +204,20 @@ fn main() {
     // Summary
     if verbose || !write {
         println!("\nProcessed {} files:", expanded_files.len());
-        println!("  {} files {}", changed_files, if write { "formatted" } else { "need formatting" });
-        println!("  {} files already formatted", expanded_files.len() - changed_files - error_files);
-        
+        println!(
+            "  {} files {}",
+            changed_files,
+            if write {
+                "formatted"
+            } else {
+                "need formatting"
+            }
+        );
+        println!(
+            "  {} files already formatted",
+            expanded_files.len() - changed_files - error_files
+        );
+
         if error_files > 0 {
             println!("  {error_files} files had errors");
         }
@@ -205,21 +233,21 @@ fn main() {
 
 fn run_doctor_check(debug: bool) {
     println!("🔍 Biome Tailwind Sorter - Installation Check\n");
-    
+
     // Check binary version
     println!("✅ Binary Version: {}", env!("CARGO_PKG_VERSION"));
-    
+
     // Check current directory
     match std::env::current_dir() {
         Ok(dir) => println!("📁 Current Directory: {}", dir.display()),
         Err(e) => println!("❌ Cannot access current directory: {e}"),
     }
-    
+
     // Check for configuration files
     println!("\n🔧 Configuration Files:");
     let config_files = [
         "tailwind.config.js",
-        "tailwind.config.mjs", 
+        "tailwind.config.mjs",
         "tailwind.config.ts",
         "tailwind.config.json",
         ".tailwindsorterrc",
@@ -227,13 +255,13 @@ fn run_doctor_check(debug: bool) {
         "biome-tailwind-sorter.json",
         "package.json",
     ];
-    
+
     let mut found_configs = 0;
     for config_file in &config_files {
         if fs::metadata(config_file).is_ok() {
             println!("  ✅ Found: {config_file}");
             found_configs += 1;
-            
+
             if debug && config_file.starts_with("tailwind.config") {
                 if let Ok(content) = fs::read_to_string(config_file) {
                     println!("    📄 Size: {} bytes", content.len());
@@ -244,17 +272,17 @@ fn run_doctor_check(debug: bool) {
             }
         }
     }
-    
+
     if found_configs == 0 {
         println!("  ⚠️  No configuration files found");
     }
-    
+
     // Test with sample content
     println!("\n🧪 Testing with sample content:");
     let test_html = r#"<div class="text-red-500 p-4 flex bg-blue-200">Test</div>"#;
     let formatter = formatter::TailwindFormatter::new(false);
     let result = formatter.format_document(test_html, None);
-    
+
     if result.changed {
         println!("  ✅ Sorting works correctly");
         println!("  📝 Before: {test_html}");
@@ -262,7 +290,7 @@ fn run_doctor_check(debug: bool) {
     } else {
         println!("  ⚠️  No changes detected (classes may already be sorted)");
     }
-    
+
     // Check for supported files in current directory
     println!("\n📄 Supported files in current directory:");
     let mut file_count = 0;
@@ -280,21 +308,25 @@ fn run_doctor_check(debug: bool) {
             }
         }
     }
-    
+
     if file_count == 0 {
         println!("  ⚠️  No supported files found (.js, .jsx, .ts, .tsx, .html, .vue, .astro)");
     }
-    
+
     // Performance test
     println!("\n⚡ Performance Test:");
     let large_test = format!("{} ", test_html).repeat(1000);
     let start = std::time::Instant::now();
     let _result = formatter.format_document(&large_test, None);
     let duration = start.elapsed();
-    println!("  ✅ Processed {} bytes in {:.2}ms", large_test.len(), duration.as_secs_f64() * 1000.0);
-    
+    println!(
+        "  ✅ Processed {} bytes in {:.2}ms",
+        large_test.len(),
+        duration.as_secs_f64() * 1000.0
+    );
+
     println!("\n🎉 Installation check complete!");
-    
+
     if found_configs > 0 && file_count > 0 {
         println!("\n💡 Try running: biome-tailwind-sorter --write .");
     }
@@ -308,31 +340,36 @@ fn process_stdin(
 ) -> Result<(), Box<dyn std::error::Error>> {
     let mut input = String::new();
     io::stdin().read_to_string(&mut input)?;
-    
+
     if debug {
         eprintln!("Debug: Input length: {} bytes", input.len());
         eprintln!("Debug: Input contains newlines: {}", input.contains('\n'));
     }
-    
+
     let result = formatter.format_document(&input, cursor_position);
-    
+
     if debug {
         eprintln!("Debug: Content changed: {}", result.changed);
         eprintln!("Debug: Output length: {} bytes", result.content.len());
         if let Some(ref cursor) = result.cursor_position {
-            eprintln!("Debug: New cursor position - line: {}, column: {}, offset: {}", 
-                     cursor.line, cursor.column, cursor.offset);
+            eprintln!(
+                "Debug: New cursor position - line: {}, column: {}, offset: {}",
+                cursor.line, cursor.column, cursor.offset
+            );
         }
     }
-    
+
     if write || !result.changed {
         // Output formatted content to stdout
         io::stdout().write_all(result.content.as_bytes())?;
         io::stdout().flush()?;
-        
+
         // Output cursor position to stderr if available
         if let Some(cursor) = result.cursor_position {
-            eprintln!("CURSOR_POSITION:{}:{}:{}", cursor.line, cursor.column, cursor.offset);
+            eprintln!(
+                "CURSOR_POSITION:{}:{}:{}",
+                cursor.line, cursor.column, cursor.offset
+            );
         }
     } else {
         // In check mode, just return exit code
@@ -340,7 +377,7 @@ fn process_stdin(
             process::exit(1);
         }
     }
-    
+
     Ok(())
 }
 
@@ -353,45 +390,51 @@ fn process_file(
     max_size_mb: f64,
 ) -> Result<bool, Box<dyn std::error::Error>> {
     // Validate file exists and is readable
-    let metadata = fs::metadata(file_path)
-        .map_err(|e| format!("Cannot access file '{file_path}': {e}"))?;
-    
+    let metadata =
+        fs::metadata(file_path).map_err(|e| format!("Cannot access file '{file_path}': {e}"))?;
+
     if !metadata.is_file() {
         return Err(format!("'{file_path}' is not a regular file").into());
     }
-    
+
     // Check file size with configurable limits and better error messages
     let max_file_size = (max_size_mb * 1024.0 * 1024.0) as u64;
     let warn_file_size = (max_size_mb * 0.1 * 1024.0 * 1024.0) as u64; // Warn at 10% of max
-    
+
     if metadata.len() > max_file_size {
-        return Err(format!("File '{}' is too large ({:.1} MB). Maximum size is {:.1} MB. Use --max-size to increase limit.", 
-                          file_path, 
+        return Err(format!("File '{}' is too large ({:.1} MB). Maximum size is {:.1} MB. Use --max-size to increase limit.",
+                          file_path,
                           metadata.len() as f64 / (1024.0 * 1024.0),
                           max_size_mb).into());
     }
-    
+
     if verbose && metadata.len() > warn_file_size {
-        eprintln!("Warning: Large file detected ({:.1} MB): {}", 
-                 metadata.len() as f64 / (1024.0 * 1024.0), file_path);
+        eprintln!(
+            "Warning: Large file detected ({:.1} MB): {}",
+            metadata.len() as f64 / (1024.0 * 1024.0),
+            file_path
+        );
     }
-    
+
     let content = fs::read_to_string(file_path)
         .map_err(|e| format!("Failed to read file '{file_path}': {e}"))?;
     let result = formatter.format_document(&content, cursor_position);
-    
+
     if result.changed {
         if write {
             // Create backup before writing (optional safety measure)
             fs::write(file_path, &result.content)
                 .map_err(|e| format!("Failed to write to file '{file_path}': {e}"))?;
-            
+
             // Output cursor position if requested and available
             if let Some(cursor) = result.cursor_position {
                 // Write cursor position to stderr so it doesn't interfere with file content
-                eprintln!("CURSOR_POSITION:{}:{}:{}", cursor.line, cursor.column, cursor.offset);
+                eprintln!(
+                    "CURSOR_POSITION:{}:{}:{}",
+                    cursor.line, cursor.column, cursor.offset
+                );
             }
-            
+
             if verbose {
                 println!("✓ Formatted {file_path}");
             }
@@ -401,7 +444,7 @@ fn process_file(
     } else if verbose {
         println!("✓ {file_path} is already formatted");
     }
-    
+
     Ok(result.changed)
 }
 
@@ -461,12 +504,26 @@ fn get_files(patterns: &[&String]) -> Vec<String> {
 }
 
 fn should_ignore_directory(dir_name: &str) -> bool {
-    matches!(dir_name, 
-        "node_modules" | ".git" | ".svn" | ".hg" | 
-        "target" | "build" | "dist" | ".next" | 
-        ".nuxt" | ".cache" | ".temp" | ".tmp" |
-        "__pycache__" | ".pytest_cache" | ".coverage" |
-        ".idea" | ".vscode" | ".DS_Store"
+    matches!(
+        dir_name,
+        "node_modules"
+            | ".git"
+            | ".svn"
+            | ".hg"
+            | "target"
+            | "build"
+            | "dist"
+            | ".next"
+            | ".nuxt"
+            | ".cache"
+            | ".temp"
+            | ".tmp"
+            | "__pycache__"
+            | ".pytest_cache"
+            | ".coverage"
+            | ".idea"
+            | ".vscode"
+            | ".DS_Store"
     )
 }
 
@@ -502,8 +559,12 @@ mod tests {
     #[test]
     fn test_process_file_no_changes() {
         let mut temp_file = NamedTempFile::new().unwrap();
-        writeln!(temp_file, r#"<div class="flex p-4 text-red-500">test</div>"#).unwrap();
-        
+        writeln!(
+            temp_file,
+            r#"<div class="flex p-4 text-red-500">test</div>"#
+        )
+        .unwrap();
+
         let formatter = TailwindFormatter::new(false);
         let result = process_file(
             &formatter,
@@ -512,16 +573,21 @@ mod tests {
             false,
             None,
             10.0, // max_size_mb
-        ).unwrap();
-        
+        )
+        .unwrap();
+
         assert!(!result); // No changes needed
     }
 
     #[test]
     fn test_process_file_with_changes() {
         let mut temp_file = NamedTempFile::new().unwrap();
-        writeln!(temp_file, r#"<div class="text-red-500 p-4 flex">test</div>"#).unwrap();
-        
+        writeln!(
+            temp_file,
+            r#"<div class="text-red-500 p-4 flex">test</div>"#
+        )
+        .unwrap();
+
         let formatter = TailwindFormatter::new(false);
         let result = process_file(
             &formatter,
@@ -530,8 +596,9 @@ mod tests {
             false,
             None,
             10.0, // max_size_mb
-        ).unwrap();
-        
+        )
+        .unwrap();
+
         assert!(result); // Changes needed
     }
 }
