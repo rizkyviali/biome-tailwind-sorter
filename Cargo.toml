@@ -8,6 +8,7 @@ license = "MIT"
 repository = "https://github.com/rizkyviali/biome-tailwind-sorter.git"
 homepage = "https://github.com/rizkyviali/biome-tailwind-sorter#readme"
 keywords = ["rust", "cli", "tailwind", "css", "formatter"]
+categories = ["command-line-utilities", "development-tools"]
 
 [[bin]]
 name = "biome-tailwind-sorter"
