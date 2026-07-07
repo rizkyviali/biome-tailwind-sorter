@@ -38,7 +38,8 @@
     "README.md",
     "LICENSE",
     "Cargo.toml",
-    "src"
+    "src",
+    "benches"
   ],
   "engines": {
     "node": ">=16.0.0"
